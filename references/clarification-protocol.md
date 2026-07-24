@@ -2,14 +2,12 @@
 
 ## Overview
 
-Defer all work until requirements are explicit and exact. This protocol governs
-the interactive clarification loop between agent and user.
+Defer all work until requirements are explicit and exact. This protocol governs the interactive clarification loop between agent and user.
 
 ## When to Activate
 
 Activate when ANY of these conditions are met:
-- Task description contains words like "maybe", "probably", "whatever",
-"simple", "just", "similar to"
+- Task description contains words like "maybe", "probably", "whatever", "simple", "just", "similar to"
 - Multiple valid implementation approaches exist
 - Business logic involves filtering, thresholds, or conditional rules
 - Output format, target environment, or constraints are unspecified
@@ -51,14 +49,12 @@ For each ambiguity point, produce a structured entry:
 - Present all clarification points to user in a single message
 - Explicitly state: "Work deferred until clarification complete"
 - If user partially responds, REPEAT the loop with remaining points
-- If user says "just proceed" without addressing points, apply defaults but
-explicitly list which defaults are being used
+- If user says "just proceed" without addressing points, apply defaults but explicitly list which defaults are being used
 
 ### Phase 4: Permission Gate
 
 Code generation is PROHIBITED until ONE of these conditions is met:
-- User explicitly uses permission terms: "permitted", "cleared",
-"generate", "proceed", "go ahead"
+- User explicitly uses permission terms: "permitted", "cleared", "generate", "proceed", "go ahead"
 - User has explicitly decided on every clarification point
 - User has waived clarification with explicit default acknowledgment
 
@@ -91,10 +87,8 @@ Reference this file in every output until ALL items are resolved.
 
 When available and appropriate:
 
-1. **Pre-clarification explorer**: Spawn a subagent to search/verify the
-doubt points before presenting questions to user
-2. **Post-clarification supervisor**: Spawn a subagent to verify that
-the clarification responses are consistent and complete
+1. **Pre-clarification explorer**: Spawn a subagent to search/verify the doubt points before presenting questions to user
+2. **Post-clarification supervisor**: Spawn a subagent to verify that the clarification responses are consistent and complete
 
 Use subagents especially for:
 - Technical feasibility questions

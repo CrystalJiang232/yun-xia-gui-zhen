@@ -2,9 +2,7 @@
 
 ## Overview
 
-RAG grounds AI-generated content in externally retrieved information rather
-than relying solely on internal knowledge. Use this pattern when technical
-accuracy, factual correctness, or up-to-date information is critical.
+RAG grounds AI-generated content in externally retrieved information rather than relying solely on internal knowledge. Use this pattern when technical accuracy, factual correctness, or up-to-date information is critical.
 
 ## When to Activate
 
@@ -46,8 +44,7 @@ Queries:
 
 ### Phase 2: Source Retrieval
 
-Execute searches and collect candidate sources. Apply the source hierarchy
-from Reference Verification Protocol:
+Execute searches and collect candidate sources. Apply the source hierarchy from Reference Verification Protocol:
 
 1. **Primary sources first**: Official docs, source code, RFCs
 2. **Cross-reference**: Find 2+ independent sources confirming the same claim
@@ -83,10 +80,8 @@ Generate response using only retrieved context + general reasoning:
 
 - **Attribute every claim**: Link each technical statement to its source
 - **Distinguish sourced vs. inferred**: Mark inferred conclusions clearly
-- **Handle gaps**: If retrieved context is insufficient, state the gap rather
-than falling back to unsourced knowledge
-- **Prefer sandbox verification**: For code behavior claims, test in isolated
-environment when retrieval is ambiguous
+- **Handle gaps**: If retrieved context is insufficient, state the gap rather than falling back to unsourced knowledge
+- **Prefer sandbox verification**: For code behavior claims, test in isolated environment when retrieval is ambiguous
 
 ### Phase 5: Attribution Output Format
 
@@ -110,8 +105,7 @@ Every RAG-grounded response must include source attribution:
 | **Source usage** | Validate existing content | Build content from retrieval |
 | **Integration** | Phase V (Verify) of CTAGV | Phase A (Acquire) + G (Generate) |
 
-**Combine them**: Use RAG during acquisition and generation, then apply
-Reference Verification during the Verify phase for double-checking.
+**Combine them**: Use RAG during acquisition and generation, then apply Reference Verification during the Verify phase for double-checking.
 
 ## Failure Modes and Handling
 

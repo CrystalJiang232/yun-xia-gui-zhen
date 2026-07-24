@@ -4,8 +4,7 @@
 
 ## Overview
 
-A structured working loop to ensure reliable in-session memory, constraint
-compliance, and information generation quality. Based on the principle:
+A structured working loop to ensure reliable in-session memory, constraint compliance, and information generation quality. Based on the principle:
 *A file of several hundred bytes is worth a context window of a trillion tokens.*
 
 ## The CTAGV Working Loop
@@ -24,8 +23,7 @@ Constraints → Task → Acquire → Generate → Verify
 | **G**enerate | Execute work | File write, code execution, modification |
 | **V**erify | Check against verification hooks | Explicit thinking or action on verification |
 
-**Compulsory**: All five phases must use ACTUAL tool actions visible in-session.
-No simulated or implied steps.
+All five phases must use actual tool actions visible in-session. No simulated or implied steps.
 
 ## Pre-Work Setup (Required Before ANY Task)
 
@@ -33,8 +31,7 @@ Before beginning the first task, create three files:
 
 ### 1. Constraints File (`/tmp/qrh-session/constraints.md`)
 
-Classify constraints as global or task-specific. Apply **Explicit Constraint**
-pattern: surface all hard, soft, and negative constraints:
+Classify constraints as global or task-specific. Apply **Explicit Constraint** pattern: surface all hard, soft, and negative constraints:
 
 ```markdown
 # Session Constraints
@@ -74,8 +71,7 @@ Comprehensive task list with full detail:
 
 ### 3. Verification Hooks File (`/tmp/qrh-session/verification.md`)
 
-Designated by user or derived from constraints (stricter wins). Apply
-**Verification Hooks** pattern: embed specific, checkable conditions:
+Designated by user or derived from constraints (stricter wins). Apply **Verification Hooks** pattern: embed specific, checkable conditions:
 
 ```markdown
 # Verification Hooks
@@ -101,8 +97,8 @@ Designated by user or derived from constraints (stricter wins). Apply
 
 ### Phase C — Constraints
 
-- Read the constraints file at the START of every single task
-- Repetitive reading is NOT redundant; it is required for reliability
+- Read the constraints file at the start of every single task
+- Repetitive reading is not redundant; it is required for reliability
 - Explicitly show the reading process in-session
 - If constraints conflict with current task needs, raise clarification
 
@@ -115,14 +111,12 @@ Designated by user or derived from constraints (stricter wins). Apply
 
 ### Phase A — Acquire
 
-Gather context from ALL relevant sources:
+Gather context from all relevant sources:
 - **Session contents**: Scan conversation history
 - **On-disk files**: ReadFile on relevant project files
-- **Online sources**: Web search for external knowledge (apply Reference
-Verification protocol and RAG Pattern as appropriate)
+- **Online sources**: Web search for external knowledge (apply Reference Verification protocol and RAG Pattern as appropriate)
 
-**Timing**: Acquire ALWAYS happens immediately before Generate. Never acquire
-then do unrelated work before generating.
+**Timing**: Acquire always happens immediately before Generate. Never acquire then do unrelated work before generating.
 
 ### Phase G — Generate
 
@@ -139,19 +133,26 @@ then do unrelated work before generating.
 - Check each hook conditionally
 - Apply **Chain-of-Reasoning Trigger** for complex verification decisions
 - If verification fails: mark task incomplete, return to Acquire or Generate
-- Do NOT mark task complete unless ALL hooks pass
+- Do not mark task complete unless all hooks pass
+
+## Mode B Extension — Swarm State & Bounded Verification
+
+When subagent orchestration (Mode B) is active, extend the CTAGV state files and verification loop as follows:
+
+- **Task Ledger + Progress Ledger**: when orchestrating subagents, the constraint/TODO files additionally track per-subagent status and last-update tick.
+- **Stall detection**: no progress update from a subagent after N actions/checkpoints → forced replan, re-delegation, or inline takeover.
+- **Bounded verification**: max 2 refine-retry rounds per verification loop; on non-convergence, escalate to the user (interactive clarification) rather than looping or autonomously adjudicating.
+- **Conflict adjudication**: autonomous adjudication only where objectively verifiable criteria exist AND the user has pre-approved it; otherwise escalate to interactive clarification.
 
 ## Verification Hooks Pattern (Extended)
 
 ### What Makes a Good Verification Hook
 
 A verification hook must be:
-- **Specific**: Not "check the code works" but "run `pytest tests/test_feature.py`
-and confirm all assertions pass"
+- **Specific**: Not "check the code works" but "run `pytest tests/test_feature.py` and confirm all assertions pass"
 - **Checkable**: Must have a binary pass/fail criterion
 - **Automatable where possible**: Prefer tool-executable checks over manual review
-- **Tied to constraints**: Each hard constraint should have at least one
-verification hook
+- **Tied to constraints**: Each hard constraint should have at least one verification hook
 
 ### Hook Types
 
@@ -201,11 +202,10 @@ verification hook
 
 ## Emergency Pause
 
-If at ANY point you find yourself:
+If at any point you find yourself:
 - Repeating "but wait"
 - Making assumptions to proceed
 - Uncertain about constraint applicability
 - About to skip a verification hook
 
-**PAUSE immediately.** Re-read constraints file. Enter Clarification Protocol
-if needed. Do not proceed with unverified assumptions.
+Pause immediately. Re-read constraints file. Enter Clarification Protocol if needed. Do not proceed with unverified assumptions.

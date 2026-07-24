@@ -1,12 +1,10 @@
 # Subagent Orchestration Protocol
 
-> **Eligibility check**: This protocol applies ONLY when the reading agent
-> confirms it has the capability to spawn subagents AND the user has not
-> explicitly forbidden subagent usage. If either condition fails, skip this
-> protocol entirely and use standard single-agent CTAGV.
+> **Eligibility check**: This protocol applies ONLY when the reading agent confirms it has the capability to spawn subagents AND the user has not explicitly forbidden subagent usage. If either condition fails, skip this protocol entirely and use standard single-agent CTAGV.
 >
-> Core principle: *The main agent is a supervisor — it ensures work gets done,
-> it does not do all the work itself.*
+> Core principle: *The main agent is a supervisor — it ensures work gets done, it does not do all the work itself.*
+
+> **Precedence**: When subagent orchestration is active (Mode B), the rules in this file are required, not advisory. They take precedence over ad-hoc task instructions whenever the two conflict, unless the user explicitly skips a rule or approves neglecting it. Interactive clarification with the user is always preferred over silently working around a rule.
 
 ---
 
@@ -19,10 +17,14 @@
 - [5. Parallel Execution Patterns](#5-parallel-execution-patterns)
 - [6. Anti-Patterns](#6-anti-patterns)
 - [7. Emergency Procedures](#7-emergency-procedures)
+- [8. Coordination & Failure Governance](#8-coordination--failure-governance)
+- [Non-negotiables recap](#non-negotiables-recap)
 
 ---
 
 ## 1. Should I Spawn? — Decision Matrix
+
+Before consulting the matrix, confirm the pre-gate: subagent spawning is justified only when the task is genuinely parallelizable or exceeds single-context capacity, AND the coordination cost (roughly 10–15x tokens per delegated unit of work) is justified by the payoff. If the pre-gate fails, stay inline regardless of what the matrix suggests.
 
 Spawn a subagent when **ANY** of the following conditions are met:
 
@@ -39,6 +41,7 @@ Spawn a subagent when **ANY** of the following conditions are met:
 | **Locally context-dependent task** | Requires understanding of the ongoing conversation flow | "Explain what you just did", "Why did you choose that approach?" |
 | **Trivially completable** | Inline execution is faster than orchestration overhead | A single file edit, a one-line grep, answering a straightforward factual question |
 | **Continuous user interaction** | Subagents lack direct user access; mid-flight clarification is impossible | Any task likely to require user feedback before completion |
+| **Tightly coupled / sequential dependencies** | Each step depends on the previous one's output; parallelism gains are illusory and handoff costs dominate | Multi-stage refactors where stage N edits what stage N-1 produced |
 
 ---
 
@@ -76,13 +79,13 @@ These roles serve as the **default set** for software development tasks. Extend 
 
 ### Composition Guidance
 
-For effective parallel execution, 5–7 concurrent subagents is a practical cutoff. Exceeding this range adds coordination overhead that typically outweighs parallelism gains. This is guidance, not a hard limit — the framework may enforce its own concurrency ceiling.
+For effective parallel execution, 5–7 concurrent subagents is a practical cutoff. Exceeding this range adds coordination overhead that typically outweighs parallelism gains. This is guidance, not a hard limit — the framework may enforce its own concurrency ceiling. The 5–7 figure is a heuristic ceiling valid only when each subagent carries a full mandate brief and progress is actively tracked; otherwise use fewer.
 
 ---
 
 ## 3. Handoff Contract — State Passing
 
-Every spawned subagent receives a **mandate** containing all and only the information it needs. No implicit context.
+Every spawned subagent receives a **mandate** containing all and only the information it needs. No implicit context. Vague delegation is the primary cause of duplicated or contradictory subagent work, so the mandate must pin down scope before spawning.
 
 ### Mandate Format
 
@@ -91,6 +94,9 @@ Every spawned subagent receives a **mandate** containing all and only the inform
 
 ## Task
 [Single-sentence subject line — clear, specific, traceable]
+
+## Echo
+[Subagent restates the applicable mandate rule in its own words before acting, confirming it understood the brief]
 
 ## Context
 [Relevant background the subagent needs to begin work]
@@ -101,12 +107,28 @@ Every spawned subagent receives a **mandate** containing all and only the inform
 ## Constraints
 [Hard/soft/negative constraints applicable to this subtask]
 
+## Boundaries
+[Scope exclusions: what this subagent must NOT touch, read, or modify]
+
+## Effort Budget
+[Expected tool-call/step budget; if exceeded, pause and report back instead of pushing on]
+
 ## Expected Output
 [Exact format and content expected on completion]
 
 ## Verifier Hook
 [How the main agent will check the output: specific, checkable condition]
 ```
+
+The Echo step exists because misunderstandings caught before execution cost nothing, while misunderstandings caught after execution cost a full subagent run.
+
+### Return Self-Check
+
+Before returning, the subagent confirms its report includes a 3-item checklist:
+
+1. It stayed within the mandate's Boundaries.
+2. It did not spawn any further subagents.
+3. Its report matches the requested Expected Output format.
 
 ### Rules
 
@@ -127,9 +149,9 @@ The main agent still implements CTAGV, but its responsibilities shift from execu
 | **T**ask | Plan own work | Decompose into subtasks; assign to subagent roles via mandates |
 | **A**cquire | Search/read/gather | Spawn acquisition subagents in parallel; synthesize their returns |
 | **G**enerate | Do the work | Spawn executor subagents; review and integrate their outputs |
-| **V**erify | Run verification hooks | Spawn verifier subagents; cross-check outputs against hooks; adjudicate conflicts |
+| **V**erify | Run verification hooks | Spawn verifier subagents; cross-check outputs against hooks; adjudicate conflicts (per §7 — with user pre-approval, else escalate) |
 
-**Key shift**: The main agent's "work" becomes *reviewing, integrating, and adjudicating* subagent outputs — not producing them directly.
+**Key shift**: The main agent's "work" becomes *reviewing, integrating, and adjudicating* subagent outputs (per §7 — with user pre-approval, else escalate) — not producing them directly.
 
 ---
 
@@ -145,7 +167,7 @@ Main Agent --> Subagent A (concern X)
           <---- (synthesize A + B + C results)
 ```
 
-Use when: Multiple concerns can be evaluated independently. Each subagent handles a distinct dimension of the same input.
+Use when: Multiple concerns can be evaluated independently. Each subagent handles a distinct dimension of the same input. Fan-Out is preferred over Pipeline only when the coordination layer is in place — mandate briefs, verification, and termination conditions for every spawned subagent.
 
 **Example**: A PR review spawning one subagent per concern (correctness, concurrency, performance, safety).
 
@@ -209,7 +231,7 @@ Use when: Evaluating trade-offs between fundamentally different approaches (e.g.
 | **Over-spawning** | Token cost balloons; trivial tasks cost more via orchestration overhead than inline execution | Check Decision Matrix — trivial tasks stay inline |
 | **Vertical nesting (depth > 1)** | Subagent spawns subagent → exponential error cascade, context loss, unaccountable failures | Max depth = 1, strict; subagent reports back, main agent re-delegates if needed |
 | **Vague mandates** | Subagent lacks clarity → returns garbage → main agent context wasted anyway | Handoff Contract: exact input, exact output, exact constraints |
-| **Sequential pipeline overuse** | Each subagent adds latency; 3 sequential subagents = 3x wall clock time | Prefer Fan-Out; Pipeline only when each stage is independently context-heavy |
+| **Sequential pipeline overuse** | Each subagent adds latency; 3 sequential subagents = 3x wall clock time | Prefer Fan-Out (with the coordination layer in place); Pipeline only when each stage is independently context-heavy |
 | **Competing subagents** | Pitting subagents against each other wastes tokens, creates conflicting outputs, and removes user agency | Assign non-overlapping scopes per mandate; if approaches conflict, escalate to user for clarification |
 | **No synthesis plan** | Main agent drowns in disconnected subagent outputs | Define Expected Output in every mandate; have integration strategy before spawning |
 | **Autonomous conflict resolution** | Main agent picks winners between conflicting subagent outputs without user input | Interactive clarification: present conflict, sources, and trade-offs; let user decide |
@@ -242,3 +264,30 @@ If the main agent context is still overloaded despite using subagents:
 1. Review mandate quality — are you passing too much context to subagents?
 2. Review synthesis strategy — are you failing to discard intermediate outputs after integration?
 3. Consider breaking the overall task into sequential macro-phases, clearing context between phases
+
+---
+
+## 8. Coordination & Failure Governance
+
+- **Evaluator-Optimizer**: an independent evaluator verifies subagent output against the acceptance criteria; retries are bounded (max 2 refinement rounds); on non-convergence, escalate to the user for interactive clarification rather than looping autonomously.
+- **Progress ledger**: the supervisor tracks per-subagent status; a stall (no update after N actions) triggers replanning or inline takeover by the main agent.
+- **Delegation logging**: handoffs and delegation decisions are logged so a visible state audit trail exists.
+- **Guardrails**: where the harness allows, external non-bypassable checks (file-scope allowlists, CI gates) complement the in-prompt rules in this file.
+- **Termination & escalation**: termination conditions must be explicit before any fan-out; escalation modes (never / on-failure / always) are decided upfront; large fan-outs pass a human plan-review gate first.
+- **Voting/debate**: for high-stakes single decisions, run the task multiple times and aggregate (voting) or use structured debate rounds.
+- **Citation/attribution verification**: fan-in synthesis of multi-subagent research claims is cross-referenced against reference-verification.md before acceptance.
+- **Failure-taxonomy awareness**: industry trace studies (e.g., MAST, UC Berkeley 2025) show inter-agent misalignment and verification/termination failures dominate multi-agent failures; structural fixes (this section) outperform prompt tweaks.
+- **Blackboard/shared-state**: file-based shared artifacts may substitute free-form message passing for auditability (optional, advanced).
+- **When NOT to fan out**: sequential or tightly-coupled tasks, budget-sensitive contexts, and tasks that fit one context window all stay inline.
+
+---
+
+## Non-negotiables recap
+
+When subagent orchestration is active, these five rules are testable on every run:
+
+1. **Eligibility gate**: subagent capability confirmed and not forbidden by the user, else single-agent CTAGV.
+2. **Max depth 1**: no subagent ever spawns another subagent.
+3. **Mandate required**: every delegation carries a complete mandate brief — no implicit context.
+4. **No competing subagents**: mandate scopes are non-overlapping; no duplicate or rival subagents.
+5. **Output conflicts escalate**: conflicting subagent outputs go to the user for interactive clarification, unless the user pre-approved autonomous adjudication.

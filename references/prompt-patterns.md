@@ -12,9 +12,7 @@
 
 ### Overview
 
-RTCF (Role-Task-Context-Format) is a universal prompt structuring framework.
-Use it to decompose any request into four dimensions, ensuring completeness and
-surfacing implicit assumptions before execution.
+RTCF (Role-Task-Context-Format) is a universal prompt structuring framework. Use it to decompose any request into four dimensions, ensuring completeness and surfacing implicit assumptions before execution.
 
 ### The Four Dimensions
 
@@ -63,10 +61,8 @@ RTCF naturally exposes gaps. Missing dimensions become clarification points:
 ### Anti-Patterns
 
 - **Over-structuring**: Do not apply RTCF to trivial one-sentence requests
-- **Rigidity**: RTCF is a lens, not a cage. Skip dimensions that genuinely
-do not apply, but document the skip consciously
-- **Assumption filling**: Never guess a missing dimension; raise it for
-clarification
+- **Rigidity**: RTCF is a lens, not a cage. Skip dimensions that genuinely do not apply, but document the skip consciously
+- **Assumption filling**: Never guess a missing dimension; raise it for clarification
 
 ---
 
@@ -74,9 +70,7 @@ clarification
 
 ### Overview
 
-Surface and declare all constraints explicitly before generating any output.
-Implicit constraints are the primary source of implementation drift and
-requirement mismatch. This pattern forces constraint visibility.
+Surface and declare all constraints explicitly before generating any output. Implicit constraints are the primary source of implementation drift and requirement mismatch. This pattern forces constraint visibility.
 
 ### Constraint Categories
 
@@ -91,8 +85,7 @@ requirement mismatch. This pattern forces constraint visibility.
 
 **Step 1: Constraint Extraction**
 
-From the user's request, extract all explicitly stated constraints. Then probe
-for implicit ones:
+From the user's request, extract all explicitly stated constraints. Then probe for implicit ones:
 
 ```markdown
 # Constraint Extraction for [task-name]
@@ -111,29 +104,24 @@ for implicit ones:
 
 **Step 2: Constraint Declaration**
 
-Restate all confirmed constraints in a single canonical location. This becomes
-the source of truth for the task.
+Restate all confirmed constraints in a single canonical location. This becomes the source of truth for the task.
 
 **Step 3: Constraint Checking**
 
-Before marking any task complete, verify all hard constraints are satisfied.
-Use Verification Hooks for this check.
+Before marking any task complete, verify all hard constraints are satisfied. Use Verification Hooks for this check.
 
 ### Integration with Context Drift Governance
 
 The Explicit Constraint pattern feeds directly into the CTAGV loop:
-- **Phase C (Constraints)**: Use constraint extraction to build the constraints
-file
+- **Phase C (Constraints)**: Use constraint extraction to build the constraints file
 - **Phase T (Task)**: Reference declared constraints when planning task steps
 - **Phase V (Verify)**: Validate output against all hard constraints
 
 ### Anti-Patterns
 
-- **Constraint omission**: Skipping implicit constraint surfacing because
-"the user would have mentioned it"
+- **Constraint omission**: Skipping implicit constraint surfacing because "the user would have mentioned it"
 - **Constraint invention**: Assuming constraints that do not exist
-- **Soft constraint enforcement**: Treating soft constraints as hard without
-confirmation
+- **Soft constraint enforcement**: Treating soft constraints as hard without confirmation
 
 ---
 
@@ -141,9 +129,7 @@ confirmation
 
 ### Overview
 
-A technique to force step-by-step reasoning before reaching conclusions.
-Applied when tasks involve complex decisions, trade-off analysis, debugging,
-or any scenario where jumping to conclusions risks error.
+A technique to force step-by-step reasoning before reaching conclusions. Applied when tasks involve complex decisions, trade-off analysis, debugging, or any scenario where jumping to conclusions risks error.
 
 ### Trigger Conditions
 
@@ -177,8 +163,7 @@ A structured reasoning chain follows these phases:
 
 **Pattern B: Explicit reasoning (visible to user)**
 - Output the full REASON structure
-- Use when decisions are contentious, trade-offs are significant, or user
-needs to audit the reasoning
+- Use when decisions are contentious, trade-offs are significant, or user needs to audit the reasoning
 - Format:
   ```markdown
   Let me work through this step by step:
@@ -198,11 +183,7 @@ needs to audit the reasoning
 
 ### Anti-Patterns
 
-- **Reasoning theater**: Using Chain-of-Reasoning as decoration without
-genuine analysis
-- **Premature selection**: Deciding on an approach before completing the
-Explore phase
-- **Missing trade-offs**: Analyzing options without honest evaluation of
-downsides
-- **Infinite reasoning**: Getting stuck in analysis paralysis; set explicit
-time/depth limits
+- **Reasoning theater**: Using Chain-of-Reasoning as decoration without genuine analysis
+- **Premature selection**: Deciding on an approach before completing the Explore phase
+- **Missing trade-offs**: Analyzing options without honest evaluation of downsides
+- **Infinite reasoning**: Getting stuck in analysis paralysis; set explicit time/depth limits

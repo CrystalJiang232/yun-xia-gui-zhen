@@ -27,7 +27,7 @@ Before applying any protocol in this skill, determine which mode applies:
 
 **Mode A — Single-Agent (Default)**: If the agent does NOT have subagent spawning capability, OR the user has explicitly forbidden subagent usage, apply only the four core protocols (Clarification, Reference Verification, Context Drift Governance, QRH Generator) and five prompt patterns. Skip all subagent orchestration content entirely.
 
-**Mode B — Subagent Orchestration**: If the agent confirms it CAN spawn subagents AND the user has not forbidden it, apply the Subagent Orchestration Protocol alongside the core protocols. Read [references/subagent-orchestration.md](references/subagent-orchestration.md) for full guidance.
+**Mode B — Subagent Orchestration**: If the agent confirms it CAN spawn subagents AND the user has not forbidden it, apply the Subagent Orchestration Protocol alongside the core protocols. Read [references/subagent-orchestration.md](references/subagent-orchestration.md) for full guidance. The subagent orchestration rules in that reference are required reading and binding whenever Mode B applies, unless the user explicitly skips or approves neglecting them.
 
 This check is mandatory at skill load time. Do not proceed with protocol selection until the mode is determined.
 
@@ -49,32 +49,19 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 
 ## Universal Principles (Apply Always)
 
-1. **No Premature Execution** — Never generate code, modify files, or execute
-tasks before requirements are explicit. When in doubt, clarify first.
+1. **No Premature Execution** — Never generate code, modify files, or execute tasks before requirements are explicit. When in doubt, clarify first.
 
-2. **Visible State** — All actions must be observable in-session. No hidden
-reasoning or invisible decisions. Explicitly show constraint reading, task
-selection, acquisition, generation, and verification.
+2. **Visible State** — All actions must be observable in-session. No hidden reasoning or invisible decisions. Explicitly show constraint reading, task selection, acquisition, generation, and verification.
 
-3. **Loop Until Done** — Clarification is iterative. One round is rarely
-sufficient. Repeat the clarification cycle until zero pending items remain.
+3. **Loop Until Done** — Clarification is iterative. One round is rarely sufficient. Repeat the clarification cycle until zero pending items remain.
 
-4. **Subagent Discipline** — When verification is needed, use explorer subagents
-pre-clarification and supervisor subagents post-clarification. Never skip
-verification for P0 constraints.
+4. **Subagent Discipline** — When verification is needed, use explorer subagents pre-clarification and supervisor subagents post-clarification. Never skip verification for P0 constraints.
 
-5. **File-Based State** — Session memory is unreliable. A file of several
-hundred bytes is worth a context window of a trillion tokens. Persist state
-(constraints, TODOs, verification hooks) to files.
+5. **File-Based State** — Session memory is unreliable. A file of several hundred bytes is worth a context window of a trillion tokens. Persist state (constraints, TODOs, verification hooks) to files.
 
-6. **RTCF Structuring** — Before engaging with any task, internally decompose
-the user's intent through the RTCF lens: Role (who), Task (what), Context
-(background), Format (output expectation). Even when not explicitly outputting
-the RTCF structure, use it to ensure completeness of understanding.
+6. **RTCF Structuring** — Before engaging with any task, internally decompose the user's intent through the RTCF lens: Role (who), Task (what), Context (background), Format (output expectation). Even when not explicitly outputting the RTCF structure, use it to ensure completeness of understanding.
 
-7. **Prefer Interactive Clarification Over Autonomous Resolution** — When
-subagent outputs conflict, or user instructions are ambiguous, present the
-conflict to the user rather than picking winners autonomously.
+7. **Prefer Interactive Clarification Over Autonomous Resolution** — Interactive clarification with the user is always the unconditional default unless the user explicitly skips it or approves neglecting it: when subagent outputs conflict, or user instructions are ambiguous, present the conflict to the user rather than picking winners autonomously.
 
 ## Protocol Details
 
@@ -82,22 +69,20 @@ conflict to the user rather than picking winners autonomously.
 
 #### 1. Clarification Protocol
 
-**When**: Requirements have any ambiguity about scope, approach, format, or
-business logic.
+**When**: Requirements have any ambiguity about scope, approach, format, or business logic.
 
 **Process**: Read [references/clarification-protocol.md](references/clarification-protocol.md)
 
 **Summary**:
 - Raise each ambiguous point with: pending question, potential options with trade-offs, and recommended default with justification
-- Defer ALL work until user explicitly permits or all points are resolved
-- If mid-work barriers emerge, PAUSE and re-enter clarification
+- Defer all work until user explicitly permits or all points are resolved
+- If mid-work barriers emerge, pause and re-enter clarification
 - No code generation without explicit permission terms ("permitted"/"cleared"/"generate")
 - Maintain pending-clarification state in-file and reference it in every output until resolved
 
 #### 2. Reference Verification
 
-**When**: Making technical claims, citing facts, or providing implementation
-guidance that relies on external knowledge.
+**When**: Making technical claims, citing facts, or providing implementation guidance that relies on external knowledge.
 
 **Process**: Read [references/reference-verification.md](references/reference-verification.md)
 
@@ -116,17 +101,15 @@ guidance that relies on external knowledge.
 **Summary**:
 - Establish Constraints-Task-Acquire-Generate-Verify (CTAGV) working loop
 - Before any work: write constraints file, comprehensive TODO file, and verification hooks file
-- Read constraint file before EVERY task (repetitive reading is required, not redundant)
+- Read constraint file before every task (repetitive reading is required, not redundant)
 - Explicitly show all five phases in-session with actual tool calls
 - Place intermediate files in `/tmp/` subdirectories; do not pollute workspace
 
 #### 4. QRH Generator Mode
 
-**When**: User explicitly asks to create, edit, or package a skill using
-skill-creator workflows.
+**When**: User explicitly asks to create, edit, or package a skill using skill-creator workflows.
 
-**Process**: This skill becomes self-referential. Apply all protocols above
-while following the skill-creator's 6-step process:
+**Process**: This skill becomes self-referential. Apply all protocols above while following the skill-creator's 6-step process:
 
 1. **Understand** — Gather concrete usage examples via interactive clarification
 2. **Plan** — Identify reusable contents (scripts, references, assets)
@@ -137,11 +120,9 @@ while following the skill-creator's 6-step process:
 
 ### Conditional Protocol
 
-#### 5. Subagent Orchestration Protocol
+#### 5. Subagent Orchestration Protocol (REQUIRED when Mode B)
 
-**When**: Agent has confirmed subagent spawning capability, user has not
-forbidden it, AND the task satisfies any condition in the Decision Matrix
-(result-oriented, context/token-consuming, or parallel and time-consuming).
+**When**: Agent has confirmed subagent spawning capability, user has not forbidden it, AND the task satisfies any condition in the Decision Matrix (result-oriented, context/token-consuming, or parallel and time-consuming).
 
 **Process**: Read [references/subagent-orchestration.md](references/subagent-orchestration.md)
 
@@ -151,9 +132,9 @@ forbidden it, AND the task satisfies any condition in the Decision Matrix
 - Use the Handoff Contract (mandate format) for every subagent delegation
 - Compose subagent roles horizontally (concern-based), never vertically
 - Max depth = 1: subagents must NOT spawn further subagents
-- Prefer Fan-Out over Pipeline; use Event-Driven and Peer-to-Peer where suited
-- If subagent outputs conflict, prefer interactive clarification over
-autonomous adjudication
+- Prefer Fan-Out over Pipeline with coordination layer (mandates, verification, termination); use Event-Driven and Peer-to-Peer where suited
+- If subagent outputs conflict, prefer interactive clarification over autonomous adjudication
+- The reference file additionally provides coordination and failure-governance rules: bounded verification retries, progress ledger, explicit termination, and escalation to the user
 - 5–7 concurrent subagents is practical guidance for parallel composition
 - All other core protocols still apply; subagent orchestration extends them
 
@@ -169,23 +150,21 @@ Apply these patterns to enhance prompt quality and response reliability:
 |        **RAG Pattern**         |   Ground generation in retrieved external context   | Technical recommendations, factual claims, best practices |
 |     **Verification Hooks**     |   Embed checkpoints to self-verify output quality   | Before marking any task complete; in multi-step workflows |
 
-**Details**: Read [references/prompt-patterns.md](references/prompt-patterns.md)
-for RTCF, Explicit Constraint, and Chain-of-Reasoning Trigger.
+**Details**: Read [references/prompt-patterns.md](references/prompt-patterns.md) for RTCF, Explicit Constraint, and Chain-of-Reasoning Trigger.
 
-**RAG Pattern**: Read [references/rag-pattern.md](references/rag-pattern.md)
-for retrieval-augmented generation workflows.
+**RAG Pattern**: Read [references/rag-pattern.md](references/rag-pattern.md) for retrieval-augmented generation workflows.
 
 ## Integration Notes
 
 - Core protocols compose: a complex task may use all reference protocols simultaneously
-- **Subagent Orchestration Protocol is additive, not substitution**: it extends coreprotocols with multi-agent execution patterns. When active, Clarification, Reference Verification, and CTAGV still apply — they are distributed across subagent roles.  
-- Prompt engineering patterns compose with core protocols: apply RTCF beforeClarification Protocol to structure ambiguous requests; use Chain-of-Reasoning within CTAGV's Acquire phase; apply Verification Hooks at CTAGV's Verify phase
+- **Subagent Orchestration Protocol is additive, not substitution**: it extends core protocols with multi-agent execution patterns. When active, Clarification, Reference Verification, and CTAGV still apply — they are distributed across subagent roles.  
+- Prompt engineering patterns compose with core protocols: apply RTCF before Clarification Protocol to structure ambiguous requests; use Chain-of-Reasoning within CTAGV's Acquire phase; apply Verification Hooks at CTAGV's Verify phase
 - Clarification Protocol takes precedence when requirements are ambiguous
 - Context Drift Governance provides the structural backbone for execution
 - Reference Verification applies at the Acquire phase of CTAGV
 - RAG Pattern extends Reference Verification with structured retrieval
 - Explicit Constraint feeds into Context Drift Governance's constraint files
 - Verification Hooks formalize CTAGV's Verify phase
-- Subagent Orchestration remaps CTAGV phases from single-agent execution tosupervisor-orchestrated delegation
+- Subagent Orchestration remaps CTAGV phases from single-agent execution to supervisor-orchestrated delegation
 - If protocols conflict, prefer stricter constraint
-- If subagent outputs conflict with user expectations, prefer interactiveclarification over autonomous resolution
+- If subagent outputs conflict with user expectations, prefer interactive clarification over autonomous resolution
