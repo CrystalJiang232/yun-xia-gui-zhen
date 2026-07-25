@@ -57,3 +57,5 @@ For each externally verified perspective, include:
 ```
 
 Links must be visitable. Prefer direct links over shortened URLs.
+
+When answering from retrieved content, quote the relevant source passage before making the claim (quote-grounding, per Anthropic guidance).

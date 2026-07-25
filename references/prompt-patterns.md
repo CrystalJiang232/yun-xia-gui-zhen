@@ -23,6 +23,8 @@ RTCF (Role-Task-Context-Format) is a universal prompt structuring framework. Use
 | **C**ontext | What background, constraints, or relevant state exists? | "Running on Python 3.11, existing codebase uses asyncio elsewhere, must maintain backward compatibility with Python 3.9" |
 | **F**ormat | What structure, style, or delivery format is expected? | "Unified diff format with inline comments explaining each change" |
 
+**Format dimension note**: When a prompt mixes content types (instructions, data, examples), separate them with structured delimiters — XML tags OR Markdown headers. Pick one format and apply it consistently; do not mix both in the same prompt.
+
 ### Usage Patterns
 
 **Pattern A: Internal decomposition (silent)**
@@ -81,6 +83,8 @@ Surface and declare all constraints explicitly before generating any output. Imp
 | **Negative Constraints** | Explicitly excluded approaches or outputs | "Do NOT use regex for HTML parsing", "No external dependencies allowed" |
 | **Implicit Constraints** | Unstated assumptions that need surfacing | User's tech stack, organization conventions, performance expectations |
 
+**Phrasing guidance**: Prefer positive specification of desired behavior. Negative constraints are for exclusions that cannot be positively expressed; each negative constraint should carry an alternative where possible.
+
 ### Workflow
 
 **Step 1: Constraint Extraction**
@@ -117,11 +121,17 @@ The Explicit Constraint pattern feeds directly into the CTAGV loop:
 - **Phase T (Task)**: Reference declared constraints when planning task steps
 - **Phase V (Verify)**: Validate output against all hard constraints
 
+### Placement of Key Constraints
+
+Key instructions and hard constraints should be placed at the prompt's start and restated at the end. Models exhibit a U-shaped position bias — content at the beginning and end receives more attention than content in the middle ("Lost in the Middle", TACL 2024). Avoid burying critical constraints mid-prompt.
+
 ### Anti-Patterns
 
 - **Constraint omission**: Skipping implicit constraint surfacing because "the user would have mentioned it"
 - **Constraint invention**: Assuming constraints that do not exist
 - **Soft constraint enforcement**: Treating soft constraints as hard without confirmation
+- **Emphasis marker overuse**: Emphasis markers (bold, caps) must be sparse and consistent; indiscriminate use dilutes their signal. (A research-derived principle from format-sensitivity studies; no authoritative quantitative threshold exists.)
+- **One-shot constraint stuffing**: Start with a minimal prompt and add constraints incrementally; avoid stuffing templates and examples into a single up-front prompt. (Directionally confirmed guidance.)
 
 ---
 
@@ -132,6 +142,8 @@ The Explicit Constraint pattern feeds directly into the CTAGV loop:
 A technique to force step-by-step reasoning before reaching conclusions. Applied when tasks involve complex decisions, trade-off analysis, debugging, or any scenario where jumping to conclusions risks error.
 
 ### Trigger Conditions
+
+**Model-conditional exemption**: When the host model has built-in reasoning capability (reasoning models / extended thinking), explicit step-by-step triggers are redundant and may degrade quality — keep prompts minimal and use the REASON structure only as a post-hoc self-check (Pattern C). For non-reasoning models, the conditions below apply unchanged.
 
 Activate Chain-of-Reasoning when ANY of these are true:
 - Multiple valid approaches with different trade-offs

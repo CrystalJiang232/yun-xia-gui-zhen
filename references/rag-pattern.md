@@ -6,6 +6,8 @@ RAG grounds AI-generated content in externally retrieved information rather than
 
 ## When to Activate
 
+**Routing note**: When all relevant corpus fits in the context window, direct long-context injection can outperform retrieval (arXiv 2407.16833, 9 datasets). RAG remains required for dynamic or fast-evolving data, cost/latency-sensitive cases, and audit or permission-control needs. Route per situation, not as a universal default: rows marked **Required** below keep their verification obligation, but the MEANS may be retrieval OR full-corpus injection, with the choice stated.
+
 | Scenario | RAG Activation |
 |----------|---------------|
 | Recommending specific library versions or APIs | **Required** |
@@ -73,6 +75,7 @@ Integrate retrieved information into the generation context:
 - Summarize for general understanding
 - Flag contradictions between sources
 - Note recency and deprecation warnings
+- Place long reference documents first and the user query last when assembling retrieved context (up to +30% response quality per Anthropic long-context guidance)
 
 ### Phase 4: Grounded Generation
 
