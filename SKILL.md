@@ -5,39 +5,46 @@ description: >
   Provides structured protocols to ensure high-quality, reliable agent behavior
   across tasks. Use when starting ANY non-trivial task, when facing ambiguous
   requirements, when external verification is needed, when structuring prompts
-  for complex tasks, or when maintaining session consistency. Triggers on:
-  software development, analysis tasks, multi-step workflows, research tasks,
-  prompt engineering tasks, or any request where requirements may be incomplete
-  or unclear. Apply this skill's protocols to avoid premature execution, ensure
-  proper clarification loops, enforce external reference validation, maintain
-  context discipline through structured file-based state tracking, and leverage
-  structured prompt templates (RTCF), reasoning triggers, retrieval augmentation,
-  embedded verification hooks, and subagent orchestration where applicable.
+  for complex tasks, when maintaining session consistency, or when governing
+  workspace/source authority and pre-edit Git or backup safety. Triggers on:
+  software development, analysis, multi-step workflows, research, prompt or skill
+  engineering, ambiguous requirements, stripped or truncated instructions or
+  missing required fields, backup-control directions, and an intentional
+  `terminates session` request to clean registered session backups.
+  Apply this skill to clarify before execution, preserve visible state, verify
+  claims and outputs, and orchestrate subagents where applicable.
 ---
 
 # 云霞归真 — QRH Governance Handbook
 
 > Core philosophy: *Defer to clarify. Verify to trust. Structure to persist.*
 
-This skill governs agent behavior through four core protocols, one conditional protocol, and five prompt engineering patterns. Apply them based on task characteristics.
+This skill governs agent behavior through five core protocols, one conditional protocol, and five prompt engineering patterns. Apply them based on task characteristics.
 
 ## Skill Entry Point — Protocol Eligibility
 
-Before applying any protocol in this skill, determine which mode applies:
+Apply the Instruction Precedence and Explicit User Overrides principle below before interpreting any skill rule. Then run the mandatory instruction-integrity screen: scan the incoming user/system message for strip signals — incomplete words or sentences, invalid JSON or structurally broken payloads, missing required parameters, or parameter values far outside any valid range. If a required field is missing or its conveyed meaning is unrecoverable, enter the **Missing-Field Protocol** immediately and do not proceed to mode selection or any other protocol until the field is restored or an explicit waiver applies. Then determine which mode applies:
 
-**Mode A — Single-Agent (Default)**: If the agent does NOT have subagent spawning capability, OR the user has explicitly forbidden subagent usage, apply only the four core protocols (Clarification, Reference Verification, Context Drift Governance, QRH Generator) and five prompt patterns. Skip all subagent orchestration content entirely.
+**Mode A — Single-Agent (Default)**: If subagent spawning is unavailable or the user has explicitly forbidden it, apply the five core protocols and five prompt patterns without orchestration. If protected source-authority resolution would require code-level comparison, halt by default and request the user's source selection or subagent availability; perform only a bounded inline comparison that an explicit scoped user direction permits.
 
-**Mode B — Subagent Orchestration**: If the agent confirms it CAN spawn subagents AND the user has not forbidden it, apply the Subagent Orchestration Protocol alongside the core protocols. Read [references/subagent-orchestration.md](references/subagent-orchestration.md) for full guidance. The subagent orchestration rules in that reference are required reading and binding whenever Mode B applies, unless the user explicitly skips or approves neglecting them.
+**Mode B — Subagent Orchestration**: If subagent spawning is available and not forbidden, apply the Subagent Orchestration Protocol alongside the core protocols. Read [references/subagent-orchestration.md](references/subagent-orchestration.md) before delegating. Delegate protected code-level source comparison even when it would otherwise appear trivial.
 
 This check is mandatory at skill load time. Do not proceed with protocol selection until the mode is determined.
 
 **Channel check (also mandatory at load time)**: determine whether the host exposes an interactive clarification/approval channel — e.g. a tool named `ask_user` or any similarly purposed tool/hook under another name — and record `CHANNEL: available|absent|unknown` in the constraints file. Universal Principle 8 applies regardless of the result.
 
+**State initialization (mandatory at task start/load)**: create the minimal governance state required by Context Drift Governance and record channel, constraints, task, and verification fields. Source-authority and protection fields may remain explicitly unresolved during this initialization.
+
+**Pre-edit check (mandatory before implementation work and every project-file edit)**: read [references/pre-edit-safety.md](references/pre-edit-safety.md), resolve one authoritative source, obtain required edit approval, and complete its repository-protection gate. Before those gates pass, limit task-artifact access to bounded authority discovery or protected candidate comparison; do not begin implementation-oriented reads or any project write.
+
 ## Protocol Selection Matrix
 
 |                          Situation                          |        Primary Protocol        |        Secondary         |
 | :---------------------------------------------------------: | :----------------------------: | :----------------------: |
-|       Requirements unclear, ambiguous, or incomplete        |   **Clarification Protocol**   | Context Drift Governance |
+| Working directory absent, relative, or has multiple matches |   **Pre-Edit Safety Gate**     | Clarification Protocol  |
+|          Project files are about to be modified             |   **Pre-Edit Safety Gate**     | Context Drift Governance |
+|   Requirements unclear or ambiguous (prompt intact)          |   **Clarification Protocol**   | Context Drift Governance |
+|   Instruction stripped/truncated or a required field missing | **Missing-Field Protocol**     | Clarification Protocol (after field restored) |
 |   External facts, technical claims, or references needed    |   **Reference Verification**   |  Clarification Protocol  |
 |            Multi-step complex task (3+ actions)             |  **Context Drift Governance**  |  Clarification Protocol  |
 |                Starting ANY non-trivial task                |  **Context Drift Governance**  |  Apply others as needed  |
@@ -51,7 +58,9 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 
 ## Universal Principles (Apply Always)
 
-1. **No Premature Execution** — Never generate code, modify files, or execute tasks before requirements are explicit. When in doubt, clarify first. Complexity scales on demand: apply the simplest protocol set sufficient for the task ("find the simplest solution possible"), consistent with applying protocols based on task characteristics.
+**Instruction Precedence and Explicit User Overrides** — Apply higher-priority system, developer, host, workspace, project, safety, and permission constraints before this skill. Within the remaining permitted scope, follow explicit current user directions over this skill's defaults, recommendations, output formats, and optional workflows; a later same-priority direction wins for the same scope. Never infer an override from silence, a timeout, an empty/default response, or broad permission. Record the exact scope, affected default, and any risk-bearing waiver in session state.
+
+1. **No Premature Execution** — Never generate code, modify files, or execute tasks before requirements are explicit. When in doubt, clarify first. Complexity scales on demand: apply the simplest protocol set sufficient for the task ("find the simplest solution possible"), consistent with applying protocols based on task characteristics. Screen every incoming instruction for strip signals before interpreting it; never infer the content of a stripped or truncated field (see Missing-Field Protocol).
 
 2. **Visible State** — All actions must be observable in-session. No hidden reasoning or invisible decisions. Explicitly show constraint reading, task selection, acquisition, generation, and verification.
 
@@ -59,17 +68,39 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 
 4. **Subagent Discipline** — When verification is needed, use explorer subagents pre-clarification and supervisor subagents post-clarification. Never skip verification for P0 constraints.
 
-4a. **Orchestration-Only Main Session (Mode B)** — When Subagent Orchestration is active and the task already satisfies a class-grade trigger (see subagent-orchestration.md §1 — Heavy-Context Task Classes), the main session MUST NOT directly edit code, modify project artifacts, open large documents, or run bulk search/exploration inline. Its permitted direct actions are confined to orchestration: spawning subagents, reading returned reports, and writing its own governance artifacts (constraint files, TODOs, progress ledger, mandates). All exploration, generation, and verification work is delegated. Exceptions are limited to: (a) explicit user approval or request, (b) the narrowly-scoped conflict-inspection exemption in subagent-orchestration.md §7, reachable only after a confidence-gated (≥0.9) tie-breaker subagent has failed to resolve the conflict, and (c) announced emergency takeover per subagent-orchestration.md §7. If the main session catches itself reaching for an edit/read tool on task material while delegation is available, that is the signal to write a mandate instead.
+4a. **Orchestration-Only Main Session (Mode B)** — For a class-grade trigger, confine the main session to orchestration and governance state. Delegate task-artifact exploration, generation, and verification unless an explicit scoped user direction permits main-session work, the bounded conflict-inspection exemption applies, or an emergency takeover is announced. Follow [references/subagent-orchestration.md](references/subagent-orchestration.md) for the exact boundaries.
 
 5. **File-Based State** — Session memory is unreliable. A file of several hundred bytes is worth a context window of a trillion tokens. Persist state (constraints, TODOs, verification hooks) to files.
 
 6. **RTCF Structuring** — Before engaging with any task, internally decompose the user's intent through the RTCF lens: Role (who), Task (what), Context (background), Format (output expectation). Even when not explicitly outputting the RTCF structure, use it to ensure completeness of understanding.
 
-7. **Prefer Interactive Clarification Over Autonomous Resolution** — Interactive clarification with the user is always the unconditional default unless the user explicitly skips it or approves neglecting it: when subagent outputs conflict, or user instructions are ambiguous, present the conflict to the user rather than picking winners autonomously.
+7. **Prefer Interactive Clarification Over Autonomous Resolution** — Unless an explicit current user direction resolves the point or waives clarification within scope, present ambiguity and conflicting subagent outputs to the user rather than choosing autonomously. Under the Missing-Field Protocol this becomes a plain request for the missing field — no options, no recommended default, no guessing — until valid semantics arrive or an explicit waiver applies.
 
-8. **Clarification Channel Discipline** — When an interactive clarification/approval channel exists (`ask_user` or similarly purposed tools/hooks): an empty, system-default, or timeout response means **deferred, never approved** — halt the entire round, persist decisions and a next-round proposal to state files, and await the user. Never use the channel to ask how to perform work the user has forbidden or not yet permitted. User-shown channel preference (pro or con) overrides skill defaults. This principle is binding even when interactive clarification itself is waived. Full rules: references/clarification-protocol.md, "Clarification Channel Governance".
+8. **Clarification Channel Discipline** — Treat an empty, system-default, or timeout response as deferred, never approved. Halt the round, persist decisions and an unexecuted next-round proposal, and await the user. Do not ask how to perform forbidden or unpermitted work. Follow the user's explicit channel preference within the precedence rule above. Read [references/clarification-protocol.md](references/clarification-protocol.md), "Clarification Channel Governance."
 
 ## Protocol Details
+
+### Universal Pre-Edit Safety Gate
+
+**When**: Before every project-file edit and whenever workspace/source authority, repository protection, backup retention, or registered-backup cleanup is relevant.
+
+**Process**: Read [references/pre-edit-safety.md](references/pre-edit-safety.md)
+
+**Summary**:
+- Resolve exactly one source of truth before repository detection: accept one exact absolute user-selected path; otherwise report the chosen path or every candidate and await the required approval
+- Mark rejected copies as non-authoritative after selection; delegate code-level candidate comparison in Mode B and halt by default in Mode A unless an explicit scoped user direction permits bounded comparison
+- After authority resolves, classify Git state: defer on unstaged, untracked, or unmerged changes unless the user explicitly directs work on that state; staged-only changes do not trigger that deferral
+- For non-Git work or an accepted dirty Git state, create and register a pre-edit backup unless the user explicitly directs `work with no backup`; record that waiver's scope
+- Retain registered backups and their location-status file after ordinary cleanup; always report retained backup locations on success or failure
+- Treat an intentional `terminates session` directive as authority to clean only exact backups registered by the active session; preserve and update the location-status file
+- On an unrecoverable failure, halt and report recovery information; do not automatically roll back
+- **Write-time CAS guard**: before each new edit group, re-hash any file this
+  session already wrote; mismatch ⇒ re-read (whole file < 100 KB, targeted
+  section otherwise; escalate for core files) before editing. Prefer scoped
+  Edit over Write; global substitution only after a full re-read. An edit-tool
+  failure for a non-system reason ⇒ suspected race ⇒ overhaul-read before the
+  next write; never silently overwrite or auto-merge. Details:
+  [references/edit-cas-gate.md](references/edit-cas-gate.md)
 
 ### Core Protocols
 
@@ -80,7 +111,9 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 **Process**: Read [references/clarification-protocol.md](references/clarification-protocol.md)
 
 **Summary**:
-- Raise each ambiguous point with: pending question, potential options, and recommended default with justification; options follow the tiered format — code-type tasks MANDATORILY require plan brief & insights, cascading-change analysis, critical-segment diff preview, and trade-off analysis per option — except architectural-level decisions (workflow, API behavior contracts, business-logic amendments), where the preview may be omitted or expressed abstractly (BEFORE/AFTER, flow descriptions, contracts, or any fitting form); non-code-type non-trivial tasks apply the same semantics with a relaxed, domain-fit preview format (see clarification-protocol.md, Option Depth Tiers)
+- Keep required decision substance invariant: options, plan insight, cascading impact, trade-offs, and a recommended default. Select the critical representation independently for each decision by its granularity and communicative fit
+- Prefer a compact diff only for a small, exact line-level code or documentation choice that passes the detailed selector gates; for broader decisions use fitting prose, `if ... then ...`, tables, flows or diagrams, contracts, schemas, or concise examples
+- When the user explicitly requests a consultant role and conditional guidance fits, use grouped `if ... then ...` recommendations with the same universal representation selector; conditional grouping is not a diff exception
 - Defer all work until user explicitly permits or all points are resolved
 - If mid-work barriers emerge, pause and re-enter clarification
 - No code generation without explicit permission terms ("permitted"/"cleared"/"generate")
@@ -107,10 +140,11 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 
 **Summary**:
 - Establish Constraints-Task-Acquire-Generate-Verify (CTAGV) working loop
-- Before any work: write constraints file, comprehensive TODO file, and verification hooks file
+- At task start/load, initialize minimal constraints, TODO, and verification-hook state; record unresolved source/protection fields rather than delaying state creation
+- Begin no implementation-oriented task-artifact read or write until source selection, required edit approval, and protection gates pass
 - Read constraint file before every task (repetitive reading is required, not redundant)
 - Explicitly show all five phases in-session with actual tool calls
-- Place intermediate files in the OS-specific temp directory by default (`/tmp` / `$TMPDIR` / `%TEMP%`; user-overridable); temp-file cleanup — covering code-work byproducts, unsure-files defaulting to keep, externally-depended files (db/log) exempt — is the FINAL verification hook; do not pollute workspace
+- Keep intermediates in the OS-specific temp directory by default; clean ordinary temporary files as the final hook, but retain externally depended files, registered backups, and backup location-status state
 
 #### 4. QRH Generator Mode
 
@@ -125,18 +159,32 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 5. **Package** — Run `package_skill.py`
 6. **Iterate** — Refine based on usage
 
+#### 5. Missing-Field Protocol (Instruction Integrity)
+
+**When**: An incoming user or system instruction shows strip signals — incomplete words or sentences, invalid JSON or structurally broken payloads, missing required parameters, or parameter values far outside any valid range — and the conveyed meaning is semantically incomplete. Natural-language typos, misspellings, and grammar errors do NOT activate this protocol.
+
+**Process**: Read [references/missing-field-protocol.md](references/missing-field-protocol.md)
+
+**Summary**:
+- Halt all work immediately; do not infer, guess, or complete the missing field
+- Do NOT run the Clarification Protocol for the missing field: no options, no plan briefs, no recommended default — state plainly which field(s) are missing/invalid and request their completion
+- Wait loop: re-screen the identical field after every response; keep prompting while the semantics remain missing; an empty/system-default/timeout response defers the round and persists state (Clarification Channel Governance §A)
+- Waiver branch (only when the user pre-initiated no-interrupt mode or explicitly says the absence is normal): disclose (a) the semantic interpreted as user intent, (b) the field suggested missing, and (c) the missing semantic completed via most-likelihood deduction, marked assumed, before proceeding
+- Once the field is restored, any remaining genuine ambiguity returns to the standard Clarification Protocol
+
 ### Conditional Protocol
 
-#### 5. Subagent Orchestration Protocol (REQUIRED when Mode B)
+#### 6. Subagent Orchestration Protocol (REQUIRED when Mode B)
 
 **When**: Agent has confirmed subagent spawning capability, user has not forbidden it, AND the task satisfies any condition in the Decision Matrix (result-oriented, context/token-consuming, or parallel and time-consuming).
 
 **Process**: Read [references/subagent-orchestration.md](references/subagent-orchestration.md)
 
 **Summary**:
-- Main agent acts as supervisor — orchestrates, does not execute; direct edits/exploration in the main session are prohibited except via the explicit exemptions (Universal Principle 4a)
+- Main agent supervises class-grade delegated work within Universal Principle 4a and the explicit-user-override rule
 - Apply the Decision Matrix to determine when spawning is justified; Heavy-Context Task Classes (large documentation exploration, mass codebase dives, wide web search/aggregation of excessive information) trigger delegation automatically — staying inline on them is a protocol violation, not a judgment call
-- Conflicting subagent findings go to a confidence-gated tie-breaker subagent (conclusion only at confidence ≥ 0.9, grounded in independent exploration; below threshold, report back to the user); the main session must not intervene while the tie-breaker runs
+- Treat protected code-level source comparison as a mandatory Mode B delegation exception; in Mode A, halt by default and allow bounded inline comparison only under an explicit scoped user direction
+- A tie-breaker may state a conclusion only at confidence ≥ 0.9 with independent evidence; autonomous adoption additionally requires objective verification and explicit user preapproval. Otherwise present its conclusion and evidence to the user and await selection; below threshold, present both findings without a tie-breaker conclusion
 - Use the Handoff Contract (mandate format) for every subagent delegation
 - Compose subagent roles horizontally (concern-based), never vertically
 - Max depth = 1: subagents must NOT spawn further subagents
@@ -165,16 +213,21 @@ Apply these patterns to enhance prompt quality and response reliability:
 
 ## Integration Notes
 
-- Message-role privilege hierarchy: developer/system-level host instructions outrank user messages per the OpenAI Model Spec; this skill's rules never override host system instructions
+- Apply the Instruction Precedence and Explicit User Overrides principle before resolving any protocol interaction
+- Apply Pre-Edit Safety before repository detection, backup decisions, CTAGV generation, or project-file writes
 - Core protocols compose: a complex task may use all reference protocols simultaneously
 - **Subagent Orchestration Protocol is additive, not substitution**: it extends core protocols with multi-agent execution patterns. When active, Clarification, Reference Verification, and CTAGV still apply — they are distributed across subagent roles.
 - Prompt engineering patterns compose with core protocols: apply RTCF before Clarification Protocol to structure ambiguous requests; use Chain-of-Reasoning within CTAGV's Acquire phase; apply Verification Hooks at CTAGV's Verify phase
-- Clarification Protocol takes precedence when requirements are ambiguous
+- Apply Clarification when ambiguity remains after the source-authority gate; honor explicit scoped user resolution or waiver under the precedence principle
 - Context Drift Governance provides the structural backbone for execution
 - Reference Verification applies at the Acquire phase of CTAGV
 - RAG Pattern extends Reference Verification with structured retrieval
 - Explicit Constraint feeds into Context Drift Governance's constraint files
 - Verification Hooks formalize CTAGV's Verify phase
 - Subagent Orchestration remaps CTAGV phases from single-agent execution to supervisor-orchestrated delegation
-- If protocols conflict, prefer stricter constraint
-- If subagent outputs conflict with user expectations, prefer interactive clarification over autonomous resolution
+- Resolve protocol conflicts by instruction priority, then specificity and the later same-priority direction for the same scope; do not use a generic "stricter wins" shortcut
+- Treat a tie-breaker's confidence-qualified conclusion as evidence, not adoption authority: adopt autonomously only when objectively verified and explicitly preapproved by the user; otherwise present the conflict, conclusion, and evidence and await user selection
+- Missing-Field Protocol takes precedence over Clarification Protocol for a stripped/truncated field; once the field is restored, remaining genuine ambiguity returns to Clarification
+- Missing-Field Protocol inherits Clarification Channel Governance §A: empty/default/timeout responses defer and halt the round; silence is never a waiver
+- The Missing-Field waiver completes semantics only; it does not waive source approval, dirty-state acceptance, or backup decisions (pre-edit-safety.md)
+- In Mode B, mandates must contain complete fields; a subagent receiving a truncated or field-missing mandate reports `NEEDS_CONTEXT`/`BLOCKED` and never guesses, and the missing-field wait loop stays in the main session

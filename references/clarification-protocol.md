@@ -9,11 +9,13 @@ Defer all work until requirements are explicit and exact. This protocol governs 
 Activate when ANY of these conditions are met:
 - Task description contains words like "maybe", "probably", "whatever", "simple", "just", "similar to"
 - Multiple valid implementation approaches exist
-- Task is code-type (implementation, refactor, API/SPI change) AND clarification is entered → the Tier-2 option format below is MANDATORY, not optional
-- Task is non-code-type but non-trivial AND clarification is entered → the Tier-1 option format below applies (weak trigger: same semantics, relaxed format)
+- Task requests implementation, refactoring, or an API/SPI change and any scope, approach, contract, behavior, or implementation decision remains ambiguous
+- Task is non-code-type but non-trivial and its scope, approach, output, or downstream effect remains ambiguous
 - Business logic involves filtering, thresholds, or conditional rules
 - Output format, target environment, or constraints are unspecified
 - User says "do what you think is best" without prior established patterns
+
+**Carve-out — Missing-Field Protocol**: when the instruction's conveyance is damaged (stripped/truncated message, invalid structured payload, missing parameter, or a parameter far outside any valid range), the missing field is NOT a clarification point under this protocol. Do not offer options, representations, plan briefs, or a recommended default for it; apply the Missing-Field Protocol (missing-field-protocol.md): plain field request, wait loop, waiver branch.
 
 ## Clarification Loop
 
@@ -29,111 +31,191 @@ Activate when ANY of these conditions are met:
 
 ### Phase 2: Raise Questions
 
-For each ambiguity point, produce a structured entry:
+For each ambiguity point, make the decision substance explicit, then select the preview representation from the decision's granularity and communicative fit. Whether the surrounding task contains code does not select the representation.
+
+This phase does not apply to a field governed by the Missing-Field Protocol (missing-field-protocol.md); that protocol's plain field request replaces options, representations, and defaults.
+
+### Required Decision Substance
+
+Every non-trivial clarification point MUST include:
+
+- **Question and option identity:** the exact decision and clearly distinguishable options
+- **Plan brief and insights:** what each option does and the decisive reasoning
+- **Cascading changes:** affected API/SPI behavior, business semantics, architecture, consumers, artifacts, and concrete symbols when known
+- **Critical change preview:** the smallest fitting representation that makes the decisive change concrete and reviewable
+- **Trade-off analysis or caveats:** benefits, costs, risks, losses, assumptions, and operational consequences
+- **Recommended default:** one option, its explicit assumptions, and a design-based reason
+- **Preview status:** whether the preview is `exact`, `illustrative`, `assumed`, or `pending verification`, and whether it is applied or non-applied
+- **Permission status:** whether the output is clarification/recommendation only, generation is permitted, or target-specific edit approval exists
+
+These are representation-invariant semantic requirements. Section labels may be compacted when the meaning remains recognizable; no particular rendering form satisfies the requirements by itself.
 
 ```markdown
-### Clarification Point N: [Brief Title]
-
-**Question**: [One-sentence exact aspect awaiting decision]
-
-**Options**:
-- **Option A**: [description] — [trade-off]
-  ```python
-  # inline code sample if relevant
-  ```
-- **Option B**: [description] — [trade-off]
-
-**Default**: [Option X] — [one-sentence reason]
-```
-
-### Option Depth Tiers
-
-**Tier 2 — Code-type tasks (MANDATORY when the code-type trigger above fires).**
-
-Every option MUST carry all four sections below, with verbatim section labels. Keep each section to 1–3 sentences; the diff preview shows only the minimal critical segment (~5–8 lines), not a full patch. Cascading changes must name concrete symbols (functions, interfaces, modules), not abstractions.
-
-**Exception — architectural-level decisions:** When the clarification point concerns non-code-level decisions within a code task — overall workflow, API behavior contracts, business logic amendments, or any architectural design choice — the diff-style preview MAY be omitted, or expressed in any abstract form that fits: BEFORE/AFTER behavior tables, sequence or flow descriptions, contract statements, pseudo-signatures, or any equivalent representation. Do NOT confine the preview to a fixed set of expressions; the requirement is that the change be made concrete and reviewable, not that it look like a diff. All other sections (plan brief, cascading changes, trade-off analysis, recommended default) remain mandatory regardless.
-
-```markdown
-### Clarification N: [Short Title]
+### Clarification N: [Short title]
 
 **Question:** [One-sentence exact aspect awaiting decision]
 
 **Option A: [name]**
 
-**Plan brief and insights:** [what this approach does, key insight]
+**Plan brief and insights:** [approach and decisive reasoning]
 
-**Cascading changes:** [API/SPI behavior, business logic/semantics,
-architecture-level program behavior affected — name concrete symbols]
+**Cascading changes:** [concrete affected behavior, symbols, consumers, and artifacts]
 
-**Critical code diff preview:**
+**Critical change preview:**
+- Representation: [prose / if-then / table / flow / contract / schema / example / diff / other]
+- Status: [exact / illustrative / assumed / pending verification], [applied / non-applied]
+- Anchor: [decisive slice in the selected representation]
+
+**Trade-off analysis or caveats:** [upsides, downsides, risks, and assumptions]
+
+**Recommended default: Option X.** [reason and explicit assumptions]
+
+**Permission status:** [clarification/recommendation only / generation permitted /
+target-specific edit approval and scope]
+```
+
+### Representation Selection
+
+Choose the representation by applying these gates in order:
+
+| Gate | Decision test | Selection |
+|------|---------------|-----------|
+| **1. Explicit direction** | Did the user explicitly require a representation? | Prefer it within instruction precedence while preserving all required decision substance; a requested diff still must pass all five diff gates. |
+| **2. Diff eligibility** | Do ALL five diff gates below pass? | A minimal non-applied diff may be the primary preview. |
+| **3. Conditional outcome** | Do material conditions change the recommendation or result? | Use grouped `if ... then ...` branches or a decision table. |
+| **4. Structural relationship** | Is the decision primarily a comparison, sequence/state transition, contract, data shape, or architecture/ownership split? | Use respectively a table, flow/diagram, contract or pseudo-signature, schema/example, or component/responsibility view. |
+| **5. Minimal fallback** | Would no specialized form improve reviewability? | Use concise natural language, a BEFORE/AFTER outline, or sampled critical intentions. |
+
+Select the smallest anchor that exposes the decision. Do not use a diff merely because implementation would eventually change code.
+
+#### Diff Eligibility — All Five Gates Required
+
+A diff may be the primary preview only when ALL five gates pass:
+
+1. **Exact locus:** One existing artifact and the exact symbol, clause, or contiguous region are known.
+2. **Line granularity:** The literal lines or wording are themselves the decision surface.
+3. **Bounded surface:** One locus and no more than 8 decisive changed lines fully represent the decision.
+4. **Semantic completeness:** The diff exposes the decision without hiding architecture, state transitions, compatibility effects, downstream behavior, or other material semantics.
+5. **Fidelity:** The exact before-state was inspected; the preview contains no invented context or placeholders.
+
+Failure of any gate prohibits a diff as the primary preview. After a complete non-diff primary anchor, a mini-diff may supplement a local detail only when labeled **Supplementary mini-diff**, marked `exact` or `illustrative`, and kept separate from the decision's primary representation. It never substitutes for missing cascade analysis or hidden semantics.
+
+#### Non-Diff Reviewability — All Gates Required
+
+A non-diff preview is reviewable only when ALL of these gates pass:
+
+1. It identifies its representation.
+2. It states a baseline-to-target or condition-to-result relationship.
+3. It names concrete actors, symbols, consumers, or artifacts, or explicitly marks their discovery as pending.
+4. It states at least one observable consequence.
+5. It marks content as `exact`, `illustrative`, `assumed`, or `pending verification`.
+6. It shows only the decisive slice and records wider effects under cascading changes.
+
+Vague prose such as "improve the architecture" or "handle errors better" fails these gates even when it is concise.
+
+#### Selection Matrix
+
+| Decision surface | Preferred primary representation |
+|------------------|----------------------------------|
+| Fine-grained code or documentation wording | Diff only if all five diff gates pass; otherwise exact excerpt plus BEFORE/AFTER intent |
+| API/SPI behavior contract | Contract statement, pseudo-signature, or BEFORE/AFTER behavior table |
+| Architecture or ownership | Component/flow diagram, responsibility table, or concise ownership contract |
+| Conditional business or runtime behavior | `if ... then ...` branches or decision table |
+| Workflow, lifecycle, routing, or state | Sequence, flow, or state-transition representation |
+| Schema, configuration shape, or structured data | Schema, field table, or representative input/output example |
+| Consultant recommendation | Grouping selected by conditions; preview selected independently by these gates |
+| Broad non-code decision | Concise prose, comparison table, BEFORE/AFTER outline, or concrete example |
+
+#### Balanced Examples
+
+Fine-grained diff example (eligible only when the exact locus and inspected before-state are true in the active task):
+
+````markdown
+**Critical change preview:**
+- Representation: diff
+- Status: exact, non-applied
+- Locus: `settings.toml`, key `timeout_seconds`
+
 ```diff
--old_critical_segment()
-+new_critical_segment()
+-timeout_seconds = 30
++timeout_seconds = 45
 ```
 
-**Trade-off analysis:** [honest upsides AND downsides — state what this option loses]
-```
+Observable consequence: requests may run for 15 seconds longer before timeout.
+````
 
-After the last option, once per clarification point:
+Broad architecture example:
 
 ```markdown
-**Recommended default: Option X.** [reason arguing from design principle,
-explicitly dismissing weaker justifications where relevant]
+**Critical change preview:**
+- Representation: responsibility table
+- Status: illustrative, non-applied
+- Baseline → target: peer identity is derived in multiple layers → the acceptor
+  validates the endpoint once and the server owns identity formatting.
+
+| Actor | Target responsibility | Observable consequence |
+|-------|-----------------------|------------------------|
+| Acceptor | Validate the peer endpoint and pass structured data | Lookup failure rejects only that peer |
+| Server | Format and own the connection identity | Registration policy remains centralized |
+
+Cascading changes: the connection factory and server creation contract carry
+the structured endpoint; presentation and registration behavior stay in the server.
 ```
 
-Anchoring example (canonical form, from a C++ accept-loop fix):
+### Consultant If-Then Variant
+
+Use this clarification presentation variant only when the user explicitly asks the agent to act as a consultant or advisor, or explicitly requests a recommendation-only or proposal-only deliverable, and material conditions genuinely change the recommendation. A no-write, deferred-work, or read-only status alone does NOT activate consultant mode. If role or deliverable intent is unclear, raise it as a clarification point rather than inferring the variant.
+
+Group related guidance by its deciding conditions:
 
 ```markdown
-**Option A: Pass a validated `tcp::endpoint` by value**
+### Recommendation Group N: [Decision area]
 
-**Plan brief and insights:** Perform one non-throwing lookup in
-`do_accept()`. Reject that peer and continue on failure. Pass the endpoint
-by value to `server`, which formats and owns the connection ID.
+**Question:** [Decision or uncertainty being resolved]
 
-**Cascading changes:** `connectionFactory`, its lambda, and
-`server::create_connection()` gain a `tcp::endpoint` parameter. The socket
-formatter is removed. Registration and session semantics remain under `server`.
+- **If [material condition], then [recommendation].**
 
-**Critical code diff preview:**
-```diff
--auto peer = socket.remote_endpoint();
-+boost::system::error_code ec;
-+auto peer = socket.remote_endpoint(ec);
-+if (ec) { LOG_WARN(...); continue; }
-+factory(std::move(socket), peer, core_id, io);
+  **Plan brief and insights:** [approach and decisive reasoning]
+
+  **Critical change preview:** [use the universal representation-selection
+  policy and state the representation and exact/illustrative status]
+
+  **Cascade-changing points:** [API/SPI behavior, business semantics,
+  architecture, downstream consumers, and concrete symbols when discoverable]
+
+  **Caveats:** [costs, risks, losses, assumptions, and operational consequences]
+
+- **If [different material condition], then [alternative recommendation].**
+  [Repeat the same compact fields.]
+
+**Recommended default:** [branch], assuming [explicit conditions]. [Reason]
+
+**Permission status:** Recommendation only. This preview does not authorize
+implementation or workspace modification.
 ```
 
-**Trade-off analysis:** Best match for the apparent architecture and future
-structured peer data. It changes an internal interface, which is acceptable
-here. Address presentation still needs a checked conversion inside `server`.
+When an explicit consultant or recommendation-only request has alternatives that compete under the same conditions, retain the standard Option A/B grouping. Use `if ... then ...` only when conditions genuinely change the recommendation. Consultant mode selects grouping, not preview representation: each option uses the universal representation-selection policy and retains critical preview substance, cascade analysis, caveats, a recommended default, verification obligations, and all permission gates.
 
-**Recommended default: Option A.** It removes duplicate inspection while
-preserving `server` ownership of identity policy — for architectural
-reasons, not compatibility.
-```
-
-**Tier 1 — Generalized (weak trigger: any non-code-type but non-trivial task entering clarification).**
-
-The same semantics apply — plan brief and insights, cascading changes, change preview, trade-off analysis, recommended default with reason — but the format is relaxed: the strict `diff`-style preview is NOT required. Instead, show the changes in whatever form fits the domain: sampled/critical intentions, before→after outline, excerpt preview, schema or sample-output preview, or step-sequence preview. "Cascading changes" generalizes to impact on downstream consumers, existing artifacts, and prior decisions. Section labels should still be recognizable, but brevity and domain-fit take precedence over rigid structure.
-
-> **TODO (placeholder for future completion):** An anchoring output sample for non-code-type tasks is currently ABSENT. Until one is added, refer to the Tier-2 code-type anchoring example above and adapt its semantics to the domain. This placeholder marks a known gap for future implementation/addition/completion of this skill.
+If the user later requests implementation, exit the consultant variant. Convert explicitly accepted recommendations and their conditions into constraints, confirm that the selected conditions still hold, and re-enter standard clarification for every unresolved implementation choice. Re-evaluate representation per decision using the universal gates. A prior recommendation, selected default, or proposal preview is not implementation permission.
 
 ### Phase 3: Await Resolution
 
 - Present all clarification points to user in a single message
 - Explicitly state: "Work deferred until clarification complete"
 - If user partially responds, REPEAT the loop with remaining points
-- If user says "just proceed" without addressing points, apply defaults but explicitly list which defaults are being used
+- If user says "just proceed" without addressing points, apply eligible defaults but explicitly list which defaults are being used
+- Never default-resolve the source/canonical input selection, the files or other targets authorized for editing, or edit approval itself; these require an explicit user decision
 
 ### Phase 4: Permission Gate
 
-Code generation is PROHIBITED until ONE of these conditions is met:
+Generation of implementation content is PROHIBITED until ONE of these conditions is met:
 - User explicitly uses permission terms: "permitted", "cleared", "generate", "proceed", "go ahead"
 - User has explicitly decided on every clarification point
 - User has waived clarification with explicit default acknowledgment
 
 **If in doubt about permission: default to analyst mode (no writing).**
+
+Generation permission and edit approval are distinct. Permission to draft or generate content does not authorize modifying an unresolved target. Before writing, the user must have explicitly approved the target files or an unambiguous scope that includes them; a general permission term may carry edit approval only when the requested write scope was already explicit. Apply `pre-edit-safety.md` to determine authoritative on-disk code or file state immediately before any write.
 
 The gate also covers the channel itself: asking clarification questions about forbidden or unpermitted edits via an ask_user-class tool is prohibited (Clarification Channel Governance §B).
 
@@ -158,11 +240,11 @@ Awaiting your answer on the deferred points.
 
 ### §B — No Clarify-Into-Forbidden-Work
 
-If the user has said "defer work"/"no code/workspace edits", or has not explicitly permitted modifying specific files, the agent MUST NOT use the channel to ask *how* to perform those modifications — asking a user who forbade edits "which edit do you prefer" is itself a protocol violation. The agent may state in plain text what it would clarify once permitted, and waits.
+If the user has said "defer work"/"no code/workspace edits", or has not explicitly permitted modifying specific files, the agent MUST NOT use the channel to ask *how* to perform those modifications — asking a user who forbade edits "which edit do you prefer" is itself a protocol violation. Questions needed to deliver an explicitly requested consultation or proposal remain allowed when they seek recommendation inputs rather than edit authority or forbidden implementation details. Otherwise, the agent may state in plain text what it would clarify once permitted, and waits.
 
 ### §C — User Channel Preference Override
 
-Explicitly shown user preference about the channel overrides this skill's defaults, in both directions: "prefer ask_user"/"ask me dynamically during work" → invoke the channel actively; "do not use ask_user"/"halt after each round" → never invoke it, use plain-text questions and stop. Record the preference in the constraints file (`CHANNEL_PREFERENCE: default|prefer-ask|no-ask`).
+Subject to the user-override principle in `SKILL.md`, explicitly shown user preference about the channel overrides this skill's channel defaults in both directions: "prefer ask_user"/"ask me dynamically during work" → invoke the channel actively when available; "do not use ask_user"/"halt after each round" → never invoke it, use plain-text questions and stop. Record the preference in the constraints file (`CHANNEL_PREFERENCE: default|prefer-ask|no-ask`).
 
 ## Mid-Work Barrier Detection
 

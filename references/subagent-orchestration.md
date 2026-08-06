@@ -4,7 +4,7 @@
 >
 > Core principle: *The main agent is a supervisor — it ensures work gets done, it does not do all the work itself.*
 
-> **Precedence**: When subagent orchestration is active (Mode B), the rules in this file are required, not advisory. They take precedence over ad-hoc task instructions whenever the two conflict, unless the user explicitly skips a rule or approves neglecting it. Interactive clarification with the user is always preferred over silently working around a rule.
+> **Precedence**: When subagent orchestration is active (Mode B), the rules in this file are required, not advisory. Explicit user directions override this skill's defaults only when higher-priority system, developer, workspace, safety, and user constraints permit the override. Interactive clarification with the user is always preferred over silently working around a rule.
 
 ---
 
@@ -24,7 +24,7 @@
 
 ## 1. Should I Spawn? — Decision Matrix
 
-Before consulting the matrix, confirm the pre-gate: subagent spawning is justified only when the task is genuinely parallelizable or exceeds single-context capacity, AND the coordination cost (roughly 10–15x tokens per delegated unit of work) is justified by the payoff. If the pre-gate fails, stay inline regardless of what the matrix suggests.
+Before consulting the matrix, confirm the pre-gate: subagent spawning is justified only when the task is genuinely parallelizable or exceeds single-context capacity, AND the coordination cost (roughly 10–15x tokens per delegated unit of work) is justified by the payoff. If the pre-gate fails, stay inline unless the protected source-candidate comparison rule below applies.
 
 Spawn a subagent when **ANY** of the following conditions are met:
 
@@ -54,6 +54,16 @@ When a class-grade trigger fires, the orchestration-only constraint (§4 Hard Ru
 | **Continuous user interaction** | Subagents lack direct user access; mid-flight clarification is impossible | Any task likely to require user feedback before completion |
 | **Tightly coupled / sequential dependencies** | Each step depends on the previous one's output; parallelism gains are illusory and handoff costs dominate | Multi-stage refactors where stage N edits what stage N-1 produced. **Exception**: a large single-artifact edit/write task delegates via Chunked Sequential Edit (§5 Pattern F) — sequential, not parallel |
 
+The Missing-Field Protocol wait loop (missing-field-protocol.md) is inherently continuous-user-interaction: the halt and the field request stay in the main session and are never delegated.
+
+### Protected Source-Candidate Comparison
+
+Use [pre-edit-safety.md](pre-edit-safety.md) as the sole owner of comparison definitions, candidate selection, Mode A fallback, and detailed pre-edit procedure.
+
+- **Mode B routing**: delegate protected comparison even when it is small, trivial, tightly coupled, or otherwise fails the normal spawn pre-gate. Use one bounded read-only comparator by default; do not create competing comparator agents.
+- **Mode A routing**: apply the fallback and explicit-override rules in [pre-edit-safety.md](pre-edit-safety.md); never infer inline authority from the absence of Mode B.
+- **Failure route**: a protected comparator failure never triggers automatic inline takeover. Re-delegate once with a fresh bounded mandate when useful, or halt and report the failure. Inline takeover requires an explicit, permitted user direction.
+
 ---
 
 ## 2. Role Taxonomy — Horizontal Decomposition Only
@@ -78,6 +88,7 @@ These roles serve as the **default set** for software development tasks. Extend 
 | **Static-Analyzer** | Runs lint, type-check, security scan, style enforcement tools | "Check for ESLint errors and TypeScript type violations" |
 | **Debugger** | Executes code, traces runtime behavior, reproduces reported issues | "Run the failing test and capture the stack trace" |
 | **Researcher** | Gathers external docs, compares library alternatives, verifies API compatibility | Reference Verification needed for technology choices |
+| **Source-Candidate Comparator** | Performs bounded read-only code comparison between candidate roots | Pre-edit source authority cannot be resolved from metadata alone |
 
 ### Extensibility Rules
 
@@ -93,7 +104,8 @@ These roles serve as the **default set** for software development tasks. Extend 
 Scale concurrency by effort, tiered:
 
 - **Default: 1 agent (inline execution)** — single-agent execution is the default; fan out only when the work is embarrassingly parallel.
-- **Comparison-type tasks: 2–4 subagents** — e.g., evaluating a few alternatives or cross-validating an answer.
+- **Protected source-candidate comparison: 1 read-only subagent** — use one bounded comparator; add no competing comparator agents.
+- **Other comparison-type tasks: 2–4 subagents** — e.g., evaluating independent alternatives or cross-validating an answer.
 - **Large, genuinely-parallel research tasks: up to 5–7 subagents** — this remains a conditional ceiling, valid only when each subagent carries a full mandate brief and progress is actively tracked.
 - **Extreme research: 10+ subagents** — permitted only behind a human plan-review gate.
 
@@ -153,7 +165,9 @@ Before returning, the subagent confirms its report includes a 3-item checklist:
 - **No implicit context**: The subagent receives *only* what's in the mandate
 - **No side effects**: The subagent returns *only* the expected output — no file writes, no state changes, unless explicitly scoped in the mandate
 - **Clean workspace**: Intermediate work products stay in the OS-temp session directory (per context-drift-governance.md, File Hygiene); only deliverables return to main agent
-- **No competing subagents**: If multiple subagents are given related tasks, their mandates must have non-overlapping scopes. Never pit subagents against each other to "see who does better"
+- **No overlapping or rival mandates**: If multiple subagents are given related tasks, their mandates must have non-overlapping scopes. Never pit subagents against each other to "see who does better"
+- **Protection inheritance**: Every writable-worker mandate carries the current protection-status record defined by [pre-edit-safety.md](pre-edit-safety.md). The worker reads and validates that record before touching task material; missing, unresolved, or stale protection state returns `BLOCKED` without a write.
+- **Mandate integrity**: every mandate contains complete fields. A subagent that receives a truncated or field-missing mandate applies the Missing-Field Protocol (missing-field-protocol.md): halt, report `NEEDS_CONTEXT` (or the mandated `BLOCKED` status), and never guess the missing content.
 
 ---
 
@@ -175,9 +189,9 @@ The main agent still implements CTAGV, but its responsibilities shift from execu
 
 **Weaker hint (no direct code inspection)**: Even outside edits, the main session *should* avoid reading or inspecting code/task material directly — inspection belongs in explorer/verifier subagents whose compressed returns keep the main context clean. This is a strong default, not an absolute prohibition. Recognized exemptions:
 
-1. **Explicit user approval or request** — the user asks the main session to look at or modify the material directly; this always overrides.
-2. **Deadlocked conflict, small and self-contained** — subagent findings conflict, no result is objectively verifiable as correct, and the confidence-gated tie-breaker subagent (§7 Tie-Breaker Protocol) has returned below the 0.9 threshold with no valid resolution. Even then: **report back and halt for user discretion first**. Direct inspection by the main session is permitted only if the conflict is small enough to be self-contained (a bounded region — a single function, file, or claim — that one focused read can adjudicate) AND the user is unavailable or has pre-approved autonomous handling of small conflicts. Anything larger stays halted pending the user.
-3. **Announced emergency takeover** — per §7, with a visible in-session announcement and ledger entry.
+1. **Explicit user approval or request** — the user asks the main session to look at or modify the material directly, and higher-priority constraints permit the override.
+2. **Deadlocked conflict, small and self-contained** — subagent findings conflict, no result is objectively verifiable as correct, and the confidence-gated tie-breaker subagent (§7 Tie-Breaker Protocol) has returned below the 0.9 report threshold with no valid resolution. Confidence never supplies adoption authority; the user-preapproval and objective-verifiability requirements still apply. Even then: **report back and halt for user discretion first**. Direct inspection by the main session is permitted only if the conflict is small enough to be self-contained (a bounded region — a single function, file, or claim — that one focused read can adjudicate) AND the user is unavailable or has pre-approved autonomous handling of small conflicts. Anything larger stays halted pending the user.
+3. **Announced emergency takeover** — per §7, with a visible in-session announcement and ledger entry. Before any write, the takeover reads and validates the inherited protection status from [pre-edit-safety.md](pre-edit-safety.md); unresolved or stale status blocks the takeover.
 
 Retries against a deadlocked conflict are bounded (exactly one tie-breaker round, consistent with the max-2 refinement bound in §8) before halting — never loop autonomously.
 
@@ -232,7 +246,7 @@ Main Agent --> Subagent A (approach: static analysis)
           <---- (compare findings; adjudicate conflicts)
 ```
 
-Use when: High-stakes verification requiring cross-method consensus. If subagents disagree, route through the §7 Tie-Breaker Protocol (confidence gate ≥ 0.9) or **initiate interactive clarification with the user** — never autonomously pick a winner without user awareness.
+Use when: High-stakes verification requiring cross-method consensus. If subagents disagree, route through the §7 Tie-Breaker Protocol or **initiate interactive clarification with the user**. A tie-breaker may report an evidence-backed conclusion at confidence ≥ 0.9, but the main agent adopts it autonomously only with prior user approval and objective verification; otherwise present it to the user for selection.
 
 ### Pattern D: Event-Driven (Reactive Triggers)
 
@@ -276,11 +290,12 @@ Use when: a single edit/write task on one artifact (or a tightly-coupled artifac
 Binding rules (derived from subagent-driven-development practice and observed incident reports):
 
 1. **Shared Artifact State Log** — the supervisor maintains it in the state files (spec in context-drift-governance.md): per-file hash/mtime after each chunk, completed chunks with one-line outcomes, decisions made, and symbols introduced (so later chunks never reference unknown code).
-2. **Staleness guard (mandatory)** — before writing any shared file, a chunk implementer MUST re-read the file or compare its hash/mtime against the State Log. Mismatch ⇒ report `STALE`, abort the chunk; the supervisor refreshes the brief and re-dispatches. Blind overwrites are a protocol violation.
+2. **Staleness guard (mandatory)** — before writing any shared file, a chunk implementer MUST re-read the file or compare its hash/mtime against the State Log. Mismatch ⇒ report `STALE`, abort the chunk; the supervisor refreshes the brief and re-dispatches. Blind overwrites are a protocol violation. General single-agent analogue: [edit-cas-gate.md](edit-cas-gate.md).
 3. **Artifacts as files, not prompt text** — each chunk dispatch carries a brief *file path* (the chunk's requirements, exact values), one line on where the chunk fits, and pointers to State Log entries it depends on. Never paste accumulated prior-chunk history into a dispatch; a fresh implementer needs its chunk, the interfaces it touches, and the global constraints — nothing else.
 4. **Status protocol** — implementers report `DONE` / `DONE_WITH_CONCERNS` / `NEEDS_CONTEXT` / `BLOCKED`. A `BLOCKED`-because-too-large chunk is re-chunked smaller; never force the same subagent to retry unchanged.
 5. **Ledger as recovery map** — one completion line per chunk in the progress ledger. Session memory does not survive compaction; trust the ledger over recollection, and never re-dispatch a chunk the ledger marks complete — re-dispatching completed work is the single most expensive orchestration failure observed in practice.
 6. **Review per chunk + final broad review** — each chunk's diff is verified before the next chunk dispatches; one broad review runs across the whole artifact at the end (fixes dispatched as ONE fix subagent for all findings, not one per finding).
+7. **Pre-edit protection inheritance** — every chunk mandate carries the current protection-status record from [pre-edit-safety.md](pre-edit-safety.md). Each implementer reads and validates it before writing in addition to applying the staleness guard; either check failing aborts the chunk.
 
 ---
 
@@ -293,7 +308,7 @@ Binding rules (derived from subagent-driven-development practice and observed in
 | **Vague mandates** | Subagent lacks clarity → returns garbage → main agent context wasted anyway | Handoff Contract: exact input, exact output, exact constraints |
 | **Sequential pipeline overuse** | Each subagent adds latency; 3 sequential subagents = 3x wall clock time | Re-check dependency structure (§5 Pattern Selection): Fan-Out only for genuinely independent concerns; Pipeline only when each stage is independently context-heavy |
 | **Parallel implementers on one artifact** | Concurrent writes to a shared file → conflicts, stale overwrites, silent loss of earlier chunks' work | Chunked Sequential Edit (§5 Pattern F): strictly sequential implementers + Artifact State Log + mandatory staleness guard |
-| **Competing subagents** | Pitting subagents against each other wastes tokens, creates conflicting outputs, and removes user agency | Assign non-overlapping scopes per mandate; if approaches conflict, escalate to user for clarification |
+| **Overlapping or rival mandates** | Pitting subagents against each other wastes tokens, creates conflicting outputs, and removes user agency | Assign non-overlapping scopes per mandate; if approaches conflict, escalate to user for clarification |
 | **No synthesis plan** | Main agent drowns in disconnected subagent outputs | Define Expected Output in every mandate; have integration strategy before spawning |
 | **Autonomous conflict resolution** | Main agent picks winners between conflicting subagent outputs without user input | Interactive clarification: present conflict, sources, and trade-offs; let user decide |
 
@@ -305,9 +320,11 @@ Binding rules (derived from subagent-driven-development practice and observed in
 
 If a subagent fails or returns unusable output:
 
-1. **Do NOT** spawn another subagent to fix it (depth violation)
-2. Main agent takes over the failed subtask inline, with full context — this is a sanctioned breach of the orchestration-only hard rule (§4) and requires: (a) a visible in-session announcement ("delegation failed at X; taking over inline because Y"), (b) a ledger entry recording the breach. If the subtask exceeds inline capacity, re-scope into smaller handoff-ready pieces and delegate fresh BEFORE taking over
-3. If the subtask is too large for inline work: re-scope into smaller, handoff-ready pieces and delegate fresh
+1. Record the failure and classify whether the subtask is protected source-candidate comparison, writable work, or ordinary read-only work.
+2. For protected source-candidate comparison, re-delegate at most once with a fresh bounded read-only mandate when useful; otherwise halt and report. Never take it over inline automatically. Inline comparison requires an explicit user direction that higher-priority constraints permit.
+3. For writable work, any fresh worker or announced emergency takeover inherits, reads, and validates the current protection status from [pre-edit-safety.md](pre-edit-safety.md) before writing. Missing, unresolved, or stale status blocks the write.
+4. For other work, take over inline only after a visible announcement and ledger entry, or re-scope it into a fresh handoff-ready mandate. A fresh sibling delegation is not subagent nesting.
+5. On terminal failure, follow [pre-edit-safety.md](pre-edit-safety.md) and Context Drift Governance: report the failure, retain protection status and registered backups, and do not perform automatic rollback.
 
 ### Conflicting Subagent Results
 
@@ -320,7 +337,8 @@ If subagents return conflicting or divergent results:
 5. **Tie-Breaker Protocol (default instrument when two subagents' findings conflict)**: when two subagents return conflicting findings, spawn at most ONE third tie-breaker subagent (bounded per §8's max-2 refinement spirit — no repeated tie-breaker loops). The tie-breaker operates under these rules:
    - **Input**: the original task context plus BOTH conflicting findings in full, presented neutrally — no main-session commentary, no hints about which finding the main session favors
    - **Task**: judge the confidence of EACH finding through **independent exploration** — re-verify the contested claims against the underlying material itself (code, documents, sources), not merely compare the two reports rhetorically. Evidence-grounded adjudication is required because naive LLM-as-judge comparison is vulnerable to fluency bias, self-preference, and shared-backbone blind spots; where the harness permits, instantiate the tie-breaker with a different method or backbone than the conflicting pair
-   - **Confidence gate**: the tie-breaker issues a conclusion ONLY when its confidence in one finding is **≥ 0.9**, stated as a numeric score per finding and backed by the specific evidence gathered during independent exploration — a bare self-rating without an evidence trail does not count as confidence (LLM self-reported confidence is imperfectly calibrated; the evidence requirement is the calibration substitute)
+   - **Confidence report gate**: the tie-breaker issues a conclusion in its report ONLY when its confidence in one finding is **≥ 0.9**, stated as a numeric score per finding and backed by the specific evidence gathered during independent exploration — a bare self-rating without an evidence trail does not count as confidence (LLM self-reported confidence is imperfectly calibrated; the evidence requirement is the calibration substitute). Crossing this report gate does not authorize the main agent to adopt the conclusion.
+   - **Adoption gate**: the main agent may adopt a tie-breaker conclusion autonomously only when the user pre-approved autonomous adjudication AND the result is objectively verifiable under the same standard. Otherwise, including when confidence is ≥ 0.9, present the conclusion and evidence to the user for selection; confidence alone is never authority.
    - **Below threshold**: if neither finding reaches 0.9, the tie-breaker returns both scores plus the gathered evidence, and the matter MUST be reported back to the human for discretion — no autonomous resolution below the gate
    - **Main-session non-intervention**: while the tie-breaker runs, the main session MUST NOT intervene — no supplementary reads of the contested material, no hints, no mid-flight re-scoping, no pre-judgment. Its only permitted actions are waiting and recording the delegation in the progress ledger
 6. **Deadlock path**: if the tie-breaker returns below the 0.9 gate, **report back and halt for user discretion**. The main session may inspect the conflicting material directly only under the small-and-self-contained exemption in §4 (Weaker hint, exemption 2); otherwise it waits.
@@ -338,7 +356,7 @@ If the main agent context is still overloaded despite using subagents:
 ## 8. Coordination & Failure Governance
 
 - **Evaluator-Optimizer**: an independent evaluator verifies subagent output against the acceptance criteria; retries are bounded (max 2 refinement rounds); on non-convergence, escalate to the user for interactive clarification rather than looping autonomously.
-- **Progress ledger**: the supervisor tracks per-subagent status; a stall (no update after N actions) triggers replanning or inline takeover by the main agent.
+- **Progress ledger**: the supervisor tracks per-subagent status; a stall (no update after N actions) triggers replanning or a policy-valid fallback. Protected comparison cannot fall back inline automatically, and writable fallback must validate inherited pre-edit protection.
 - **Delegation logging**: handoffs and delegation decisions are logged so a visible state audit trail exists.
 - **Guardrails**: where the harness allows, external non-bypassable checks (file-scope allowlists, CI gates) complement the in-prompt rules in this file.
 - **Termination & escalation**: termination conditions must be explicit before any fan-out; escalation modes (never / on-failure / always) are decided upfront; large fan-outs pass a human plan-review gate first. Escalations that return an empty/system-default response follow Clarification Channel Governance §A (clarification-protocol.md): the point defers and the round halts — it is never an approval.
@@ -353,12 +371,14 @@ If the main agent context is still overloaded despite using subagents:
 
 ## Non-negotiables recap
 
-When subagent orchestration is active, these five rules are testable on every run:
+When subagent orchestration is active, the following rules are testable on every run:
 
 1. **Eligibility gate**: subagent capability confirmed and not forbidden by the user, else single-agent CTAGV.
 2. **Max depth 1**: no subagent ever spawns another subagent.
 3. **Mandate required**: every delegation carries a complete mandate brief — no implicit context.
-4. **No competing subagents**: mandate scopes are non-overlapping; no duplicate or rival subagents.
-5. **Output conflicts escalate**: conflicting subagent outputs go to the §7 Tie-Breaker Protocol (one round, conclusion only at confidence ≥ 0.9 grounded in independent exploration) or to the user for interactive clarification; below the 0.9 gate, the conflict MUST go to the user — no autonomous adjudication below threshold, and no main-session intervention while the tie-breaker runs.
+4. **No overlapping or rival mandates**: mandate scopes are non-overlapping; no agents compete on the same delegated concern.
+5. **Output conflicts escalate**: conflicting subagent outputs go to the §7 Tie-Breaker Protocol or to the user for interactive clarification. A tie-breaker reports a conclusion only at confidence ≥ 0.9 with independent evidence; the main agent adopts it autonomously only with user-preapproved adjudication and objective verification. Otherwise the user selects, because confidence alone is never authority; no main-session intervention occurs while the tie-breaker runs.
 6. **Class-grade triggers are mandatory**: when the task belongs to a Heavy-Context Task Class (§1) and Mode B holds, delegation is required — staying inline is a violation, not a judgment call.
-7. **Orchestration-only main session**: no direct edits, bulk exploration, or code inspection in the main session while delegation is available — governance files, explicit user request, the small-and-self-contained deadlock exemption (§4), and announced §7 emergency takeovers excepted.
+7. **Orchestration-only main session**: no direct edits, bulk exploration, or code inspection in the main session while delegation is available — governance files, permitted explicit user directions, the small-and-self-contained deadlock exemption (§4), and announced §7 emergency takeovers excepted.
+8. **Protected comparison routing**: protected source-candidate comparison uses one bounded read-only comparator in Mode B regardless of triviality; Mode A and candidate-selection behavior come exclusively from [pre-edit-safety.md](pre-edit-safety.md), and no inline or takeover path bypasses that contract.
+9. **Pre-edit protection inheritance**: every writable worker, chunk implementer, and emergency takeover reads valid inherited protection status before writing; terminal failure reports and retains state without automatic rollback.

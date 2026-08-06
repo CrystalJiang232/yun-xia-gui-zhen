@@ -1,6 +1,6 @@
 # Context Drift Governance
 
-> Priority: P0 (supersedes all other constraints)
+> Priority: P0 within this skill. Higher-priority system, developer, safety, permission, user, workspace, and project constraints remain authoritative.
 
 ## Overview
 
@@ -13,25 +13,27 @@ If the host environment performs history compaction, task goals and hard constra
 
 ## The CTAGV Working Loop
 
-Every task must follow this five-phase cycle visibly in-session:
+Every task must follow this five-phase cycle visibly in-session. Minimal state initialization and a mandatory preflight gate occur before Phase A whenever implementation reads or workspace writes are possible:
 
 ```
-Constraints → Task → Acquire → Generate → Verify
+[Initialize State] → Constraints → Task → [Metadata Preflight + Protection Gate]
+                   → Acquire → Generate → Verify
 ```
 
 | Phase | Action | Must Show |
 |-------|--------|-----------|
 | **C**onstraints | Read constraint file | Explicit ReadFile action on constraints file |
 | **T**ask | Read task from TODO | Explicit ReadFile on TODO file for current task |
-| **A**cquire | Gather context (session, disk, web) | ReadFile, web search, or session scan |
+| **Preflight** | Resolve authority and protection without implementation reads | Valid state in `protection-status.md` |
+| **A**cquire | Gather approved implementation context | ReadFile, web search, or session scan within approved scope |
 | **G**enerate | Execute work | File write, code execution, modification |
 | **V**erify | Check against verification hooks | Explicit thinking or action on verification |
 
-All five phases must use actual tool actions visible in-session. No simulated or implied steps.
+All five phases and every applicable protection transition must use actual tool actions visible in-session. No simulated or implied steps. [pre-edit-safety.md](pre-edit-safety.md) is the sole detailed owner of source approval, protection, backup, cleanup, and terminal-failure semantics.
 
 ## Pre-Work Setup (Required Before ANY Task)
 
-Before beginning the first task, create three files:
+Before task work or implementation reads, create the four minimal state files below. Populate source approval and protection fields through metadata-only preflight before reading implementation contents or writing task artifacts.
 
 ### 1. Constraints File (`/tmp/qrh-session/constraints.md`)
 
@@ -60,7 +62,7 @@ Comprehensive task list with full detail:
 # Session TODO
 
 ## Task 1: [Title]
-**Status**: pending | in_progress | completed
+**Status**: pending | in_progress | blocked | incomplete | halted | completed
 **Dependencies**: none | Task X
 
 ### Details
@@ -89,7 +91,7 @@ On any new round opening with an `UNEXECUTED` next-round proposal, read it befor
 
 ### 3. Verification Hooks File (`/tmp/qrh-session/verification.md`)
 
-Designated by user or derived from constraints (stricter wins). Apply **Verification Hooks** pattern: embed specific, checkable conditions:
+Designated by the user or derived from constraints. Resolve hook precedence by instruction priority first, then applicable scope, then recency at equal priority and scope. Use strictness only to choose among equally authorized, compatible hooks; strictness never overrides a higher-priority, narrower, or newer conflicting instruction. Apply **Verification Hooks** pattern: embed specific, checkable conditions:
 
 ```markdown
 # Verification Hooks
@@ -109,8 +111,29 @@ Designated by user or derived from constraints (stricter wins). Apply **Verifica
 - [ ] No syntax errors in generated code
 - [ ] Session state files updated
 - [ ] All hard constraints from constraints.md satisfied
-- [ ] FINAL: Temporary files cleaned up — ALL intermediates incl. code-work byproducts and Cleanup Registry paths; externally-depended files (db/log) exempt; when unsure a file is safe to delete, leave it. Default behavior; waived or relocated only by explicit user instruction (record waiver in constraints file)
+- [ ] Every implementation read and workspace write consumed an accepted state from `protection-status.md`
+- [ ] FINAL: File hygiene and cleanup conform to [pre-edit-safety.md](pre-edit-safety.md)
 ```
+
+### 3.1 Missing-Field Log (Missing-Field Protocol activations)
+
+When the Missing-Field Protocol (SKILL.md) activates, record each activation in session state — append to the constraints file or a dedicated `missing-field-log.md` in the session directory:
+
+```markdown
+## Missing-Field Log — Activation <id>
+Field: <name or description>
+Signals: incomplete sentence | invalid JSON/structured payload | missing parameter | out-of-range value
+Status: awaiting | deferred | restored | waived
+Attempts: <N> — one line per round (response summary + still-missing evidence)
+Waiver: none | <exact wording + scope + mode>
+Disclosure: interpreted semantic / suggested missing field / completed semantic (assumed)
+```
+
+Reference this log in every output until the activation is restored or waived. The wait loop's deferral on empty/system-default/timeout responses follows Clarification Channel Governance §A (clarification-protocol.md): mark deferred, halt the round, persist the UNEXECUTED next-round proposal, and await the user.
+
+### 4. Protection Status Registry (`/tmp/qrh-session/protection-status.md`)
+
+Create and preserve the registry defined in [pre-edit-safety.md](pre-edit-safety.md). Initialize it minimally before task work, then record explicit source approval and protection readiness before any implementation read or task-artifact write.
 
 ## Phase-by-Phase Execution Rules
 
@@ -128,21 +151,28 @@ Designated by user or derived from constraints (stricter wins). Apply **Verifica
 - Only ONE task may be `in_progress` at a time
 - If blocked, mark as blocked with reason and spawn new task for blocker
 
+### Metadata Preflight and Protection Gate
+
+- Apply [pre-edit-safety.md](pre-edit-safety.md) before implementation Acquire or any task-artifact write
+- Limit preflight reads to conversation and path/repository metadata authorized for source proposal and protection
+- Do not continue while source approval is unresolved or merely proposed, except for an explicitly authorized `ready_compare` read-only comparison
+- `ready_compare` permits bounded candidate comparison; `ready_read` permits review of one approved source; neither permits writes
+- The writable states are only `ready_git`, `ready_backed_up`, and `ready_no_backup`, each backed by the source-approval and repository-protection evidence required by the detailed owner
+
 ### Phase A — Acquire
 
-Inject only the minimal high-signal token set needed for the current step; just-in-time retrieval is preferred over preloading (context-rot evidence).
-
-Gather context from all relevant sources:
-- **Session contents**: Scan conversation history
-- **On-disk files**: ReadFile on relevant project files
-- **Online sources**: Web search for external knowledge (apply Reference Verification protocol and RAG Pattern as appropriate)
-
-**Timing**: Acquire always happens immediately before Generate. Never acquire then do unrelated work before generating.
+After the gate passes, inject only the minimal high-signal context needed for the current step. Gather implementation context only within the accepted scope. Acquire under `ready_compare` or `ready_read` is read-only and cannot enter Generate. Acquire under a writable ready state happens immediately before Generate; stale, expanded, or newly writable scope re-enters preflight.
 
 ### Phase G — Generate
 
 - Execute the actual work
+- Consume `ready_git`, `ready_backed_up`, or `ready_no_backup` for every Generate scope; `ready_compare` and `ready_read` never enter Generate
 - Prefer editing existing files over creating new ones
+- Before any write to a file already written this session, re-hash and compare
+  against the session CAS register ([edit-cas-gate.md](edit-cas-gate.md));
+  mismatch ⇒ re-read before editing (whole file < 100 KB, targeted section
+  otherwise; escalate for core files). Prefer scoped edits; global
+  substitution only after a full re-read
 - Keep intermediate files in the OS-temp session subdirectory (see File Hygiene); redirect code-work byproducts there where the toolchain allows, else record them in the Cleanup Registry
 - Do not pollute the workspace with temporary files
 - Show generation actions explicitly
@@ -153,7 +183,7 @@ Gather context from all relevant sources:
 - Explicitly show thinking and/or action process
 - Check each hook conditionally
 - Apply **Chain-of-Reasoning Trigger** for complex verification decisions
-- If verification fails: mark task incomplete, return to Acquire or Generate
+- Apply the retry and terminal-failure transitions owned by [pre-edit-safety.md](pre-edit-safety.md)
 - Do not mark task complete unless all hooks pass
 
 ## Mode B Extension — Swarm State & Bounded Verification
@@ -161,8 +191,8 @@ Gather context from all relevant sources:
 When subagent orchestration (Mode B) is active, extend the CTAGV state files and verification loop as follows:
 
 - **Task Ledger + Progress Ledger**: when orchestrating subagents, the constraint/TODO files additionally track per-subagent status and last-update tick.
-- **Stall detection**: no progress update from a subagent after N actions/checkpoints → forced replan, re-delegation, or inline takeover.
-- **Bounded verification**: max 2 refine-retry rounds per verification loop; on non-convergence, escalate to the user (interactive clarification) rather than looping or autonomously adjudicating.
+- **Stall detection**: no progress update from a subagent after N actions/checkpoints triggers replan, re-delegation, or inline takeover; every replacement or takeover inherits the preflight contract in [pre-edit-safety.md](pre-edit-safety.md).
+- **Bounded verification**: max 2 refine-retry rounds per verification loop; non-convergence follows the terminal transition owned by [pre-edit-safety.md](pre-edit-safety.md).
 - **Conflict adjudication**: autonomous adjudication only where objectively verifiable criteria exist AND the user has pre-approved it; otherwise escalate to interactive clarification.
 - **Artifact State Log (required for chunked edits)**: when a large edit/write task is split into sequential chunks (subagent-orchestration.md §5 Pattern F), the state files carry an artifact-state log shared across chunk executors:
 
@@ -176,17 +206,18 @@ When subagent orchestration (Mode B) is active, extend the CTAGV state files and
 Completed chunks: [one-line outcome each]
 Decisions: [D1: ...]
 Symbols introduced: [names + locations, so later chunks never reference unknown code]
+Protection registry: [path + valid gate state + approved edit scope]
 ```
 
-Each chunk executor MUST, before writing any shared file, re-read it or compare its hash/mtime against this log; a mismatch means STALE — abort the chunk and report back. Blind overwrites are a protocol violation.
+Each chunk executor MUST consume an accepted Protection Status Registry state and follow the staleness contract in [pre-edit-safety.md](pre-edit-safety.md) before implementation reads or writes.
 
 ## Mode A — Iteration Caps & Termination Conditions
 
 For Mode A (single-agent CTAGV), each task must set an explicit satisfiable termination condition and a maximum iteration/step cap before execution begins:
 
 - **Termination condition**: a concrete, satisfiable criterion defining when the task is done (tied to the task's verification hooks).
-- **Iteration/step cap**: a hard maximum on loop iterations or steps. The cap is an alarm, not a cure — hitting it triggers replan or escalation to interactive clarification, mirroring the Mode B bounded-verification rule, rather than continued looping.
-- **Chunked execution for large edits**: a large single-session edit/write task is split into ordered chunks rather than carried in one stretch. Between chunks, checkpoint decisions and per-file state (hash/mtime) to the state file, and re-read the target file before each chunk write — the Mode B Artifact State Log's staleness guard, applied inline. Context drift makes an un-checkpointed long edit session prone to the same stale-overwrite failure as unlogged sequential subagents.
+- **Iteration/step cap**: a hard maximum on loop iterations or steps. Hitting it follows the terminal transition owned by [pre-edit-safety.md](pre-edit-safety.md).
+- **Chunked execution for large edits**: a large single-session edit/write task is split into ordered chunks rather than carried in one stretch. Between chunks, checkpoint decisions and per-file state (hash/mtime) to the state file, and re-read the target file before each chunk write — the Mode B Artifact State Log's staleness guard, applied inline. Context drift makes an un-checkpointed long edit session prone to the same stale-overwrite failure as unlogged sequential subagents — the general single-agent analogue is [edit-cas-gate.md](edit-cas-gate.md).
 
 ## Verification Hooks Pattern (Extended)
 
@@ -223,22 +254,13 @@ A verification hook must be:
   - Result: PASS / FAIL
   - Notes: [any observations]
 
-**Overall**: PASS / FAIL — Proceeding / Returning to Generate
+**Overall**: PASS / FAIL — Completing / Retrying within cap / Halting
 ```
 
 ## File Hygiene
 
-- **Location**: Session state files and intermediate files go to the OS-specific temporary directory by default — `/tmp` on Linux, `$TMPDIR` on macOS (falling back to `/tmp`), `%TEMP%` on Windows — under a session subdirectory (e.g. `qrh-session/`). Landing them anywhere else requires explicit user specification.
-- **Code-work intermediates**: when code work or program execution generates byproducts (compiler/interpreter/build artifacts, caches, downloaded fixtures), redirect them to the temp directory where the toolchain allows (environment variables, output flags, working-directory choice); where redirection is not possible, record each path in the state file's Cleanup Registry (below) for cleanup reference.
-- **Exemption — externally-depended files**: files that external processes or later user-instructed runs depend on — notably database files and log files produced during user-instructed program execution — are NOT intermediate files; they stay in place and are excluded from cleanup.
-- **Cleanup Registry**: the state file carries a running block:
-
-```markdown
-## Cleanup Registry
-- [path] — [origin: which task/step produced it] — [ ] cleaned
-```
-
-- **Cleanup**: temporary files are cleaned up as the FINAL verification hook (see Verification Hooks) — final so that verification never depends on files already deleted. The duty covers ALL generated files: code-work byproducts and intermediates alike. When unsure whether an auto-generated file is safe to delete (unidentifiable files beyond common byproducts), default to NOT cleaning it up. Waivers: explicit user instruction may waive cleanup entirely or relocate it (e.g. "keep the build dir for inspection"); record any waiver in the constraints file.
+- Put governance state and intermediates in the permitted active-session temporary location by default, and register their provenance and status.
+- Apply cleanup, backup retention, termination directives, and status preservation only as specified by [pre-edit-safety.md](pre-edit-safety.md); do not introduce a second cleanup algorithm here.
 - **Workspace**: Only final deliverables in the workspace
 - **No pollution**: Never write intermediate state to the project directory
 
@@ -246,6 +268,7 @@ A verification hook must be:
 
 | Protocol | Integration Point |
 |----------|-------------------|
+| Pre-Edit Safety | Mandatory transition before Phase A for implementation reads and workspace writes |
 | Clarification Protocol | Phase C (conflicts trigger clarification) and Phase T (ambiguous tasks) |
 | Reference Verification | Phase A (external source acquisition) |
 | RAG Pattern | Phase A (enhanced retrieval) and Phase G (grounded generation) |
@@ -261,4 +284,4 @@ If at any point you find yourself:
 - Uncertain about constraint applicability
 - About to skip a verification hook
 
-Pause immediately. Re-read constraints file. Enter Clarification Protocol if needed. Do not proceed with unverified assumptions.
+Pause immediately. Re-read the constraints and Protection Status Registry, then apply the halt/report contract in [pre-edit-safety.md](pre-edit-safety.md). Do not proceed with unverified assumptions.

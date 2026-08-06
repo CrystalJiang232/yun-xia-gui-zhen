@@ -21,7 +21,7 @@ RTCF (Role-Task-Context-Format) is a universal prompt structuring framework. Use
 | **R**ole | What persona, expertise level, or function should the agent adopt? | "Senior Python developer reviewing code for a junior teammate" |
 | **T**ask | What specific action or output is required? | "Refactor this function to use async/await pattern" |
 | **C**ontext | What background, constraints, or relevant state exists? | "Running on Python 3.11, existing codebase uses asyncio elsewhere, must maintain backward compatibility with Python 3.9" |
-| **F**ormat | What structure, style, or delivery format is expected? | "Unified diff format with inline comments explaining each change" |
+| **F**ormat | What structure, style, or delivery format is expected? | "Decision table with concise examples for each option" |
 
 **Format dimension note**: When a prompt mixes content types (instructions, data, examples), separate them with structured delimiters — XML tags OR Markdown headers. Pick one format and apply it consistently; do not mix both in the same prompt.
 
@@ -59,6 +59,10 @@ RTCF naturally exposes gaps. Missing dimensions become clarification points:
 - Missing **Task** → Ask: "What is the specific deliverable or action needed?"
 - Missing **Context** → Ask: "What background or constraints should I know?"
 - Missing **Format** → Ask: "What form should the output take?"
+
+**Truncation carve-out**: a missing dimension caused by a stripped or truncated instruction (incomplete sentence, invalid structured payload, missing parameter, or out-of-range value) is NOT a normal clarification point. Do not use Pattern B restatement or the missing-dimension questions to solicit options or guesses; apply the Missing-Field Protocol (missing-field-protocol.md) — state the missing field plainly and request completion.
+
+An explicit consultant/advisor role or recommendation-only/proposal-only deliverable routes clarification to the Consultant If-Then Variant in [clarification-protocol.md](clarification-protocol.md) when condition-dependent grouping fits. A no-write, deferred-work, or read-only status alone does not establish that role. If the role or deliverable is ambiguous, clarify it. If the user later requests implementation, return unresolved choices to standard clarification and reselect each decision's representation under that reference's granularity-and-fit rule. Presentation preferences remain subject to the user-override principle in `SKILL.md`.
 
 ### Anti-Patterns
 
@@ -108,7 +112,7 @@ From the user's request, extract all explicitly stated constraints. Then probe f
 
 **Step 2: Constraint Declaration**
 
-Restate all confirmed constraints in a single canonical location. This becomes the source of truth for the task.
+Restate all confirmed constraints in a single canonical location. This becomes the canonical constraint record for the task. For code and file authority immediately before a write, follow `pre-edit-safety.md` rather than treating the constraint record as a substitute for current on-disk state.
 
 **Step 3: Constraint Checking**
 
