@@ -1,18 +1,7 @@
 ---
 name: yun-xia-gui-zhen
 description: >
-  Quick Reference Handbook (QRH) for AI agent prompt engineering governance.
-  Provides structured protocols to ensure high-quality, reliable agent behavior
-  across tasks. Use when starting ANY non-trivial task, when facing ambiguous
-  requirements, when external verification is needed, when structuring prompts
-  for complex tasks, when maintaining session consistency, or when governing
-  workspace/source authority and pre-edit Git or backup safety. Triggers on:
-  software development, analysis, multi-step workflows, research, prompt or skill
-  engineering, ambiguous requirements, stripped or truncated instructions or
-  missing required fields, backup-control directions, and an intentional
-  `terminates session` request to clean registered session backups.
-  Apply this skill to clarify before execution, preserve visible state, verify
-  claims and outputs, and orchestrate subagents where applicable.
+  Quick Reference Handbook (QRH) for AI agent prompt engineering governance. Provides structured protocols to ensure high-quality, reliable agent behavior across tasks. Use when starting ANY non-trivial task, when facing ambiguous requirements, when external verification is needed, when structuring prompts for complex tasks, when maintaining session consistency, or when governing workspace/source authority and pre-edit Git or backup safety. Triggers on: software development, analysis, multi-step workflows, research, prompt or skill engineering, ambiguous requirements, stripped or truncated instructions or missing required fields, backup-control directions, and an intentional `terminates session` request to clean registered session backups. Apply this skill to clarify before execution, preserve visible state, verify claims and outputs, and orchestrate subagents where applicable.
 ---
 
 # 云霞归真 — QRH Governance Handbook
@@ -60,13 +49,22 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 
 **Instruction Precedence and Explicit User Overrides** — Apply higher-priority system, developer, host, workspace, project, safety, and permission constraints before this skill. Within the remaining permitted scope, follow explicit current user directions over this skill's defaults, recommendations, output formats, and optional workflows; a later same-priority direction wins for the same scope. Never infer an override from silence, a timeout, an empty/default response, or broad permission. Record the exact scope, affected default, and any risk-bearing waiver in session state.
 
+**Conflicting Prompt Handling** — When instructions conflict, resolve by source authority, then polarity, then scope; recency applies only across rounds, never inside one single input.
+- Authority: strict instructions (host-enforced sandbox or permissions, org-policy-pinned, platform/system-prompt, safety-critical) outrank session-level injected guidance, which outranks project(workspace)-level guidance, which outranks system/global-level injected guidance. Non-strict, prompt-level system directives may be overridden by explicit user instructions in the same round.
+- Polarity: within the same scope, bans and DON'Ts override DOs, so "no write" beats "proceed with work". A ban binds only its declared scope: "keep task read-only" does not block clarification work under the temporary directory. Only absolute prohibitions ("never", "must not") qualify as bans; soft negatives ("prefer not to") do not.
+- Recency: for user instructions at the same authority level, the later round wins; never apply recency within one single input. For example, a later "edit approved" overrides an earlier "keep this session read-only".
+- Single-input conflict that authority, polarity, and scope cannot decide: always enter Clarification Protocol; never resolve silently or by strictness alone.
+This ladder is behavioral precedence, not a security boundary; strict constraints remain binding. Full semantics, examples, and caveats: [references/conflicting-prompt-handling.md](references/conflicting-prompt-handling.md)
+
+**Approval Briefing and Fatigue Checks** — Every approval request states the action, names each target and argument, and presents the command readably; periodic attention checks verify user monitoring without deceiving. Details: [references/approval-briefing.md](references/approval-briefing.md)
+
 1. **No Premature Execution** — Never generate code, modify files, or execute tasks before requirements are explicit. When in doubt, clarify first. Complexity scales on demand: apply the simplest protocol set sufficient for the task ("find the simplest solution possible"), consistent with applying protocols based on task characteristics. Screen every incoming instruction for strip signals before interpreting it; never infer the content of a stripped or truncated field (see Missing-Field Protocol).
 
 2. **Visible State** — All actions must be observable in-session. No hidden reasoning or invisible decisions. Explicitly show constraint reading, task selection, acquisition, generation, and verification.
 
 3. **Loop Until Done** — Clarification is iterative. One round is rarely sufficient. Repeat the clarification cycle until zero pending items remain.
 
-4. **Subagent Discipline** — When verification is needed, use explorer subagents pre-clarification and supervisor subagents post-clarification. Never skip verification for P0 constraints.
+4. **Subagent Discipline** — When verification is needed, use explorer subagents pre-clarification and supervisor subagents post-clarification. Never skip verification for P0 constraints. For cross-verification, pair White-Verifier and Black-Verifier profiles (subagent-orchestration.md, Black-and-White Verification) to cover expected and unexpected flaw ranges.
 
 4a. **Orchestration-Only Main Session (Mode B)** — For a class-grade trigger, confine the main session to orchestration and governance state. Delegate task-artifact exploration, generation, and verification unless an explicit scoped user direction permits main-session work, the bounded conflict-inspection exemption applies, or an emergency takeover is announced. Follow [references/subagent-orchestration.md](references/subagent-orchestration.md) for the exact boundaries.
 
@@ -77,6 +75,8 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 7. **Prefer Interactive Clarification Over Autonomous Resolution** — Unless an explicit current user direction resolves the point or waives clarification within scope, present ambiguity and conflicting subagent outputs to the user rather than choosing autonomously. Under the Missing-Field Protocol this becomes a plain request for the missing field — no options, no recommended default, no guessing — until valid semantics arrive or an explicit waiver applies.
 
 8. **Clarification Channel Discipline** — Treat an empty, system-default, or timeout response as deferred, never approved. Halt the round, persist decisions and an unexecuted next-round proposal, and await the user. Do not ask how to perform forbidden or unpermitted work. Follow the user's explicit channel preference within the precedence rule above. Read [references/clarification-protocol.md](references/clarification-protocol.md), "Clarification Channel Governance."
+
+**One-Line Sentences** — Never split a sentence across lines; keep each sentence on one line regardless of total length.
 
 ## Protocol Details
 
@@ -94,13 +94,7 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 - Retain registered backups and their location-status file after ordinary cleanup; always report retained backup locations on success or failure
 - Treat an intentional `terminates session` directive as authority to clean only exact backups registered by the active session; preserve and update the location-status file
 - On an unrecoverable failure, halt and report recovery information; do not automatically roll back
-- **Write-time CAS guard**: before each new edit group, re-hash any file this
-  session already wrote; mismatch ⇒ re-read (whole file < 100 KB, targeted
-  section otherwise; escalate for core files) before editing. Prefer scoped
-  Edit over Write; global substitution only after a full re-read. An edit-tool
-  failure for a non-system reason ⇒ suspected race ⇒ overhaul-read before the
-  next write; never silently overwrite or auto-merge. Details:
-  [references/edit-cas-gate.md](references/edit-cas-gate.md)
+- **Write-time CAS guard**: before each new edit group, re-hash any file this session already wrote; mismatch ⇒ re-read (whole file < 100 KB, targeted section otherwise; escalate for core files) before editing. Prefer scoped Edit over Write; global substitution only after a full re-read. An edit-tool failure for a non-system reason ⇒ suspected race ⇒ overhaul-read before the next write; never silently overwrite or auto-merge. Details: [references/edit-cas-gate.md](references/edit-cas-gate.md)
 
 ### Core Protocols
 
@@ -194,6 +188,7 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 - The reference file additionally provides coordination and failure-governance rules: bounded verification retries, progress ledger, explicit termination, and escalation to the user
 - Concurrency scales with task effort: default 1 agent (inline); comparison tasks warrant 2–4 subagents; large genuinely-parallel research tasks may reach 5–7 (extreme research 10+, requiring a human plan-review gate) — 5–7 is a conditional ceiling, not a recommendation
 - All other core protocols still apply; subagent orchestration extends them
+- Cross-verification uses dual profiles — White (full intent + flaw hints) and Black (artifact + scope only) — per Black-and-White Verification in [subagent-orchestration.md](references/subagent-orchestration.md); black finalizes before seeing white's report
 
 ### Prompt Engineering Patterns
 
@@ -226,6 +221,8 @@ Apply these patterns to enhance prompt quality and response reliability:
 - Verification Hooks formalize CTAGV's Verify phase
 - Subagent Orchestration remaps CTAGV phases from single-agent execution to supervisor-orchestrated delegation
 - Resolve protocol conflicts by instruction priority, then specificity and the later same-priority direction for the same scope; do not use a generic "stricter wins" shortcut
+- Apply the Conflicting Prompt Handling scheme to every conflicting-instruction case, not only protocol conflicts: resolve by source authority, then polarity, then scope; recency applies only across rounds; a single-input conflict that authority, polarity, and scope cannot decide enters Clarification Protocol. Details: [references/conflicting-prompt-handling.md](references/conflicting-prompt-handling.md)
+- Apply the Approval Briefing and Fatigue Checks scheme to every user-facing approval request: brief explicitly with named targets and multi-line commands; run labeled attention checks on a random 12-20 interval; never break atomic destructive groups. Details: [references/approval-briefing.md](references/approval-briefing.md)
 - Treat a tie-breaker's confidence-qualified conclusion as evidence, not adoption authority: adopt autonomously only when objectively verified and explicitly preapproved by the user; otherwise present the conflict, conclusion, and evidence and await user selection
 - Missing-Field Protocol takes precedence over Clarification Protocol for a stripped/truncated field; once the field is restored, remaining genuine ambiguity returns to Clarification
 - Missing-Field Protocol inherits Clarification Channel Governance §A: empty/default/timeout responses defer and halt the round; silence is never a waiver

@@ -168,11 +168,7 @@ After the gate passes, inject only the minimal high-signal context needed for th
 - Execute the actual work
 - Consume `ready_git`, `ready_backed_up`, or `ready_no_backup` for every Generate scope; `ready_compare` and `ready_read` never enter Generate
 - Prefer editing existing files over creating new ones
-- Before any write to a file already written this session, re-hash and compare
-  against the session CAS register ([edit-cas-gate.md](edit-cas-gate.md));
-  mismatch ⇒ re-read before editing (whole file < 100 KB, targeted section
-  otherwise; escalate for core files). Prefer scoped edits; global
-  substitution only after a full re-read
+- Before any write to a file already written this session, re-hash and compare against the session CAS register ([edit-cas-gate.md](edit-cas-gate.md)); mismatch ⇒ re-read before editing (whole file < 100 KB, targeted section otherwise; escalate for core files). Prefer scoped edits; global substitution only after a full re-read
 - Keep intermediate files in the OS-temp session subdirectory (see File Hygiene); redirect code-work byproducts there where the toolchain allows, else record them in the Cleanup Registry
 - Do not pollute the workspace with temporary files
 - Show generation actions explicitly

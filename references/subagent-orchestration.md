@@ -98,6 +98,7 @@ These roles serve as the **default set** for software development tasks. Extend 
 - **Max depth = 1**: Subagents are **strictly prohibited** from spawning further subagents. If a subagent encounters a sub-subtask, it must either:
   - Complete the sub-subtask inline using its own context and tools
   - Report back to the main agent with a clear recommendation for re-delegation
+- **Verification profiles**: verifier mandates declare `Verification profile: white | black` and follow the Black-and-White Verification rules (§5) — white carries intent plus flaw hints; black carries artifact + scope + output schema only
 
 ### Composition Guidance
 
@@ -127,6 +128,9 @@ Every spawned subagent receives a **mandate** containing all and only the inform
 
 ## Echo
 [Subagent restates the applicable mandate rule in its own words before acting, confirming it understood the brief]
+
+## Verification Profile
+[white | black — required on verifier mandates; see Black-and-White Verification]
 
 ## Context
 [Relevant background the subagent needs to begin work]
@@ -299,6 +303,24 @@ Binding rules (derived from subagent-driven-development practice and observed in
 
 ---
 
+### Black-and-White Verification (Dual-Profile)
+
+For cross-verification, spawn two (or two groups of) verifier subagents with deliberately different instruction injection:
+
+- **White-Verifier** — receives full information on the original implementation intent (when available) plus explicit flaw-pattern guidance (e.g. "seek pitfalls predominant at field X"). Hunts the expected, conventional flaw range.
+- **Black-Verifier** — receives minimal or no business context: the artifact, repo scope, and output schema only. No intent, no hints, no implementation history, no prior-verifier reports; header/dependency files are omitted unless required for the artifact to be reviewable. Hunts unexpected, out-of-convention flaws and counters anchoring/confirmation bias.
+
+The profiles are complementary (阴阳相生): white anchors on intent, black stays independent; the union maximizes flaw coverage.
+
+**When to use** — risk-based, not automatic: P0/high-stakes verification, security-sensitive or low-oversight AI code, and post-generation checkpoints.
+Trivial tasks (e.g. review of a dozens-of-lines script) usually need only one profile: choose white when intent-rule conformance dominates, black when author-blindness is the main risk.
+
+**Mandate rules** — every verifier mandate declares `Verification profile: white | black` (§3 Handoff Contract). White mandates include implementation intent + flaw-pattern hints; black mandates constrain Context to the artifact + repo scope + output schema. Anti-contamination: the black verifier finalizes its report before receiving the white verifier's report, hints, or session reasoning.
+
+**Adjudication** — both profiles' findings carry the same evidence standard ([reference-verification.md](reference-verification.md)) and equal standing; there is no automatic preference for either profile. Conflicting findings resolve through the Tie-Breaker Protocol in §7 (Emergency Procedures → Conflicting Subagent Results); its evidence-gated adoption and user-escalation rules apply unchanged. Prefer different backbones per profile where available.
+
+---
+
 ## 6. Anti-Patterns
 
 | Anti-Pattern | Why It Fails | Correct Approach |
@@ -337,6 +359,9 @@ If subagents return conflicting or divergent results:
 5. **Tie-Breaker Protocol (default instrument when two subagents' findings conflict)**: when two subagents return conflicting findings, spawn at most ONE third tie-breaker subagent (bounded per §8's max-2 refinement spirit — no repeated tie-breaker loops). The tie-breaker operates under these rules:
    - **Input**: the original task context plus BOTH conflicting findings in full, presented neutrally — no main-session commentary, no hints about which finding the main session favors
    - **Task**: judge the confidence of EACH finding through **independent exploration** — re-verify the contested claims against the underlying material itself (code, documents, sources), not merely compare the two reports rhetorically. Evidence-grounded adjudication is required because naive LLM-as-judge comparison is vulnerable to fluency bias, self-preference, and shared-backbone blind spots; where the harness permits, instantiate the tie-breaker with a different method or backbone than the conflicting pair
+   - **Brief diversity**: findings produced under different verification
+     profiles (Black-and-White Verification, §5) are equal-standing evidence;
+     weight by evidence and confidence, never by profile origin
    - **Confidence report gate**: the tie-breaker issues a conclusion in its report ONLY when its confidence in one finding is **≥ 0.9**, stated as a numeric score per finding and backed by the specific evidence gathered during independent exploration — a bare self-rating without an evidence trail does not count as confidence (LLM self-reported confidence is imperfectly calibrated; the evidence requirement is the calibration substitute). Crossing this report gate does not authorize the main agent to adopt the conclusion.
    - **Adoption gate**: the main agent may adopt a tie-breaker conclusion autonomously only when the user pre-approved autonomous adjudication AND the result is objectively verifiable under the same standard. Otherwise, including when confidence is ≥ 0.9, present the conclusion and evidence to the user for selection; confidence alone is never authority.
    - **Below threshold**: if neither finding reaches 0.9, the tie-breaker returns both scores plus the gathered evidence, and the matter MUST be reported back to the human for discretion — no autonomous resolution below the gate
@@ -382,3 +407,4 @@ When subagent orchestration is active, the following rules are testable on every
 7. **Orchestration-only main session**: no direct edits, bulk exploration, or code inspection in the main session while delegation is available — governance files, permitted explicit user directions, the small-and-self-contained deadlock exemption (§4), and announced §7 emergency takeovers excepted.
 8. **Protected comparison routing**: protected source-candidate comparison uses one bounded read-only comparator in Mode B regardless of triviality; Mode A and candidate-selection behavior come exclusively from [pre-edit-safety.md](pre-edit-safety.md), and no inline or takeover path bypasses that contract.
 9. **Pre-edit protection inheritance**: every writable worker, chunk implementer, and emergency takeover reads valid inherited protection status before writing; terminal failure reports and retains state without automatic rollback.
+10. **Verification duality**: cross-verification uses White/Black verifier profiles (§5 Black-and-White Verification); black verifiers finalize before seeing white's report; conflicts resolve via the §7 Tie-Breaker Protocol with no automatic profile preference.
