@@ -13,6 +13,38 @@ Activate when producing ANY of:
 - Best practice recommendations
 - Comparison between technologies
 
+## Source Authority
+
+Resolve every external claim in this order unless the user explicitly designates another source:
+
+1. **Workspace files** — repo-local docs, specs, schemas, generated types, lockfiles, and project notes.
+2. **System-scope files** — headers, includes, shared libraries, interpreter files, and system package files.
+3. **Web search results** — only after the user broadly authorizes web search.
+
+Workspace search is default-granted. Web search is default-denied unless the user authorizes it with broad phrasing such as "search online", "look it up on the web", or "check online". Search system-scope files with `find` or `rg`; never assume a package path. On multiple system candidates, stop and ask which one is used, unless the compiler/interpreter/library is explicitly declared in a Makefile, script head, or shebang.
+
+System ambiguity anchors:
+
+- Target
+- Kind
+- Candidates
+- Action
+- Request
+- Exemption already satisfied
+
+Provenance and version anchors:
+
+- Scope
+- Location
+- Version
+- Retrieved
+
+Record these anchors for any claim that affects output. Mark `Version` as `unverified` when it cannot be established, and do not assert version-dependent behavior. When local/system and web versions conflict, surface the mismatch and ask which version is authoritative.
+
+Authority is selected before quantity. More lower-tier sources do not compensate for a missing higher-authority match.
+
+Subagents inherit the same rule and may run web search only when the parent mandate explicitly authorizes it. Otherwise they rely only on parent-provided information.
+
 ## Verification Requirements
 
 ### Minimum Standard

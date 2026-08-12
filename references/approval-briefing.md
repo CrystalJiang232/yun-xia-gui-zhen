@@ -2,6 +2,15 @@
 
 Single-file owner of approval-request briefing and human-attention fatigue detection. It operationalizes the **Approval Briefing and Fatigue Checks** bullet in [../SKILL.md](../SKILL.md) and composes with [pre-edit-safety.md](pre-edit-safety.md), [clarification-protocol.md](clarification-protocol.md), and [context-drift-governance.md](context-drift-governance.md).
 
+## Table of Contents
+
+- Purpose
+- M1 — Approval Briefing Rules
+- Few-Shot Anchoring
+- M2 — Fatigue Detection
+- Emission Discipline
+- Caveats
+
 ## Purpose
 
 Human approval reliability degrades under confirmation fatigue: users approve roughly 97% of permission requests, and in one study only 13.6% of testers refused a clearly dangerous command swapped into a permission prompt. Two mechanisms counter this degradation: M1 explicit and readable approval briefings, and M2 periodic labeled attention checks.

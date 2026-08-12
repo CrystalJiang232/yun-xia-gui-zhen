@@ -1,5 +1,19 @@
 # Clarification Protocol
 
+## Table of Contents
+
+- Overview
+- When to Activate
+- Clarification Loop
+- Required Decision Substance
+- Representation Selection
+- Consultant If-Then Variant
+- Clarification Channel Governance
+- Mid-Work Barrier Detection
+- State Management
+- Pending Clarifications
+- Subagent Inspector
+
 ## Overview
 
 Defer all work until requirements are explicit and exact. This protocol governs the interactive clarification loop between agent and user.

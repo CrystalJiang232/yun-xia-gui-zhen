@@ -1,5 +1,16 @@
 # Missing-Field Protocol (Instruction Integrity)
 
+## Table of Contents
+
+- Overview
+- When to Activate
+- When Not to Activate
+- Protocol Behavior
+- Mid-Work Activation
+- State Management
+- Subagent Orchestration Interaction
+- Precedence and Composition
+
 ## Overview
 
 Protects workflow control against instructions that were stripped or truncated in transit (network loss, keyboard mistakes, system-message corruption). When the instruction's conveyance is damaged, the agent must NOT reconstruct the meaning. It halts, states which field is missing, and requests completion — repeatedly, without guessing — until valid semantics arrive or an explicit waiver applies.

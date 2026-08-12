@@ -1,5 +1,16 @@
 # RAG (Retrieval-Augmented Generation) Pattern
 
+## Table of Contents
+
+- Overview
+- When to Activate
+- The RAG Workflow
+- Retrieved Context
+- Synthesis
+- RAG vs. Reference Verification
+- Failure Modes and Handling
+- Anti-Patterns
+
 ## Overview
 
 RAG grounds AI-generated content in externally retrieved information rather than relying solely on internal knowledge. Use this pattern when technical accuracy, factual correctness, or up-to-date information is critical.
@@ -45,6 +56,10 @@ Queries:
 ```
 
 ### Phase 2: Source Retrieval
+
+Establish Source Authority before retrieval: check workspace files, then system-scope files, then web search results only when the user has broadly authorized web search. Search system-scope files with `find` or `rg`; never assume a package path. On multiple system candidates, stop and ask which one is used unless the compiler/interpreter/library is explicitly declared.
+
+Record provenance and version anchors for any retrieved source that affects output: `Scope`, `Location`, `Version`, `Retrieved`. Mark `Version` as `unverified` when it cannot be established. When local/system and web versions conflict, surface the mismatch and ask.
 
 Execute searches and collect candidate sources. Apply the source hierarchy from Reference Verification Protocol:
 

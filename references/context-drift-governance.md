@@ -2,6 +2,19 @@
 
 > Priority: P0 within this skill. Higher-priority system, developer, safety, permission, user, workspace, and project constraints remain authoritative.
 
+## Table of Contents
+
+- Overview
+- The CTAGV Working Loop
+- Pre-Work Setup
+- Phase-by-Phase Execution Rules
+- Mode B Extension
+- Verification Hooks Pattern
+- Verification Execution Log
+- File Hygiene
+- Integration with Other Protocols
+- Emergency Pause
+
 ## Overview
 
 A structured working loop to ensure reliable in-session memory, constraint compliance, and information generation quality. Based on the principle:
