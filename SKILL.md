@@ -1,20 +1,20 @@
 ---
 name: yun-xia-gui-zhen
 description: >
-  Quick Reference Handbook (QRH) for AI agent prompt engineering governance. Provides structured protocols to ensure high-quality, reliable agent behavior across tasks. Use when starting ANY non-trivial task, when facing ambiguous requirements, when external verification is needed, when structuring prompts for complex tasks, when maintaining session consistency, or when governing workspace/source authority and pre-edit Git or backup safety. Triggers on: software development, analysis, multi-step workflows, research, prompt or skill engineering, ambiguous requirements, stripped or truncated instructions or missing required fields, backup-control directions, and an intentional `terminates session` request to clean registered session backups. Apply this skill to clarify before execution, preserve visible state, verify claims and outputs, and orchestrate subagents where applicable.
+  Quick Reference Handbook (QRH) for AI agent prompt engineering governance. Provides structured protocols to ensure high-quality, reliable agent behavior across tasks. Use when starting ANY non-trivial task, when facing ambiguous requirements, when external verification is needed, when structuring prompts for complex tasks, when maintaining session consistency, or when governing workspace/source authority and pre-edit Git or backup safety. Triggers on: software development, analysis, multi-step workflows, research, prompt or skill engineering, ambiguous requirements, stripped or truncated instructions or missing required fields, backup-control directions, tool-failure retry governance, retry-loop prevention, and an intentional `terminates session` request to clean registered session backups. Apply this skill to clarify before execution, preserve visible state, verify claims and outputs, and orchestrate subagents where applicable.
 ---
 
 # 云霞归真 — QRH Governance Handbook
 
 > Core philosophy: *Defer to clarify. Verify to trust. Structure to persist.*
 
-This skill governs agent behavior through six core protocols, one conditional protocol, and five prompt engineering patterns. Apply them based on task characteristics.
+This skill governs agent behavior through seven core protocols, one conditional protocol, and five prompt engineering patterns. Apply them based on task characteristics.
 
 ## Skill Entry Point — Protocol Eligibility
 
 Apply the Instruction Precedence and Explicit User Overrides principle below before interpreting any skill rule. Then run the mandatory instruction-integrity screen: scan the incoming user/system message for strip signals — incomplete words or sentences, invalid JSON or structurally broken payloads, missing required parameters, or parameter values far outside any valid range. If a required field is missing or its conveyed meaning is unrecoverable, enter the **Missing-Field Protocol** immediately and do not proceed to mode selection or any other protocol until the field is restored or an explicit waiver applies. Then determine which mode applies:
 
-**Mode A — Single-Agent (Default)**: If subagent spawning is unavailable or the user has explicitly forbidden it, apply the six core protocols and five prompt patterns without orchestration. If protected source-authority resolution would require code-level comparison, halt by default and request the user's source selection or subagent availability; perform only a bounded inline comparison that an explicit scoped user direction permits.
+**Mode A — Single-Agent (Default)**: If subagent spawning is unavailable or the user has explicitly forbidden it, apply the seven core protocols and five prompt patterns without orchestration. If protected source-authority resolution would require code-level comparison, halt by default and request the user's source selection or subagent availability; perform only a bounded inline comparison that an explicit scoped user direction permits.
 
 **Mode B — Subagent Orchestration**: If subagent spawning is available and not forbidden, run the mandatory Inter-Agent Communication capability self-check (FULL / PARTIAL / NONE; an explicit user direction forbidding spawning applies NONE directly), then apply the Subagent Orchestration Protocol alongside the core protocols. Read [references/subagent-orchestration.md](references/subagent-orchestration.md) and [references/inter-agent-communication.md](references/inter-agent-communication.md) before delegating. Delegate protected code-level source comparison even when it would otherwise appear trivial.
 
@@ -42,6 +42,7 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 |            Multi-step complex task (3+ actions)             |  **Context Drift Governance**  |  Clarification Protocol  |
 |                Starting ANY non-trivial task                |  **Context Drift Governance**  |  Apply others as needed  |
 |              Any interrupt or halt/stop/wait steering       | **Interrupt Recovery Protocol** |  Clarification Protocol  |
+|    User asks to elaborate/explain or requests quick answer  |         **Quick Ask Mode**      |     Clarification Protocol |
 |          User provides skill/creator instructions           |     **QRH Generator Mode**     |      All protocols       |
 | Agent can spawn subagents, task benefits from parallel work |   **Subagent Orchestration**   | Context Drift Governance |
 |             Need to structure a complex prompt              |       **RTCF Template**        |    Chain-of-Reasoning    |
@@ -49,6 +50,8 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 |        Need to ground response in external knowledge        |        **RAG Pattern**         |  Reference Verification  |
 |          Need enforceable constraint declarations           |    **Explicit Constraint**     | Context Drift Governance |
 |              Need embedded quality checkpoints              |     **Verification Hooks**     | Context Drift Governance |
+|          Tool call failed or retry discipline needed         | **Tool Failure & Retry Governance** | Reference Verification |
+|        Editing files with dependent artifacts (docs, tests, headers)        |   **Cascade-Impact Scan**   | Pre-Edit Safety Gate |
 
 ## Universal Principles (Apply Always)
 
@@ -78,6 +81,8 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 4b. **Convergence (Explorer–Worker–Verifier)** — Main session owns the body; subagents run pre/post only. See Pattern G.
 
 4c. **Interrupt Recovery (mandatory)** — On any interrupt, do not assume the reason; re-read session history and inspect workspace status before reasoning. Later steering or rejection messages override earlier instructions. Follow [references/interrupt-recovery.md](references/interrupt-recovery.md).
+
+9. **Quick Ask Mode** — On a narrow elaboration, explanation, quick-answer, or post-work report request that passes the mandatory semantic check, do not edit workspace files, do not spawn subagents, and answer from main-session context only. Prefer no status-file writes. If the answer is uncertain, state the caveat; if unavailable, ask permission for external search. Prefer normal-task interpretation when the request is ambiguous between research and quick ask.
 
 5. **File-Based State** — Session memory is unreliable. A file of several hundred bytes is worth a context window of a trillion tokens. Persist state (constraints, TODOs, verification hooks) to files.
 
@@ -152,6 +157,7 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 - Read constraint file before every task (repetitive reading is required, not redundant)
 - Explicitly show all five phases in-session with actual tool calls
 - Keep intermediates in the OS-specific temp directory by default; clean ordinary temporary files as the final hook, but retain externally depended files, registered backups, and backup location-status state
+- Before editing, run the Cascade-Impact Scan ([references/cascade-impact.md](references/cascade-impact.md)); present cascade changes along-way with the main proposal, per-point via Clarification Protocol, and re-enter the pre-edit gate for new targets
 
 #### 4. QRH Generator Mode
 
@@ -192,9 +198,37 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 - Report what was done and which phase was abandoned; offer practical options without apologies.
 - Treat user-provided rejection reasons as highest-priority instructions; halt on too-large deviations.
 
+#### 7. Quick Ask Mode
+
+**When**: The user asks for a narrow elaboration, explanation, quick answer, or post-work report, and a semantic check confirms quick ask rather than normal research.
+
+**Process**: Apply the rules below inline; no reference file is loaded.
+
+**Summary**:
+- Do not edit workspace files, spawn subagents, or auto-fetch external sources.
+- Answer from main-session context only.
+- Prefer no status-file writes.
+- Keep reasoning compact and scoped to the exact question.
+- If uncertain, state the caveat; if unavailable, request permission for external search.
+- If ambiguous, give a compact option-style clarification.
+
+#### 7a. Tool Failure & Retry Governance (Agent-Level)
+
+**When**: any tool call fails — command execution, HTTP/API calls, file edits, or arbitrary tool output.
+
+**Process**: Read [references/retry-governance.md](references/retry-governance.md)
+
+**Summary**:
+- Classify error-code-first: transient (5xx/timeout), throttling (429/Retry-After), deterministic (4xx default, schema/DB/authorization errors), LLM-recoverable, user-fixable
+- Retry only transient and throttling failures, same-shape, exponential backoff + jitter, max 3 attempts; honor Retry-After
+- Never retry deterministic failures; halt-and-report immediately via [pre-edit-safety.md](references/pre-edit-safety.md) Failure and Rollback
+- Loop guard: halt after 3 consecutive tool failures; no identical-call loops
+- No auto-deviation: alternatives require the approval pipeline ([approval-briefing.md](references/approval-briefing.md)), never silent workarounds
+- Prompt discipline is a soft constraint; reinforce at system level via the framework-tuning attachment prompt
+
 ### Conditional Protocol
 
-#### 7. Subagent Orchestration Protocol (REQUIRED when Mode B)
+#### 8. Subagent Orchestration Protocol (REQUIRED when Mode B)
 
 **When**: Agent has confirmed subagent spawning capability, user has not forbidden it, AND the task satisfies any condition in the Decision Matrix (result-oriented, context/token-consuming, or parallel and time-consuming).
 
@@ -232,6 +266,21 @@ Apply these patterns to enhance prompt quality and response reliability:
 
 **RAG Pattern**: Read [references/rag-pattern.md](references/rag-pattern.md) for retrieval-augmented generation workflows.
 
+## Bootstrap Mode (opt-in, inactive by default)
+
+Bootstrap is an **active self-scan** mode, distinct from the passive protocol triggers above. It is disabled by default: no bootstrap files are loaded at skill load, and the passive trigger surface is unchanged.
+
+**Activation**: the user must explicitly invoke it by saying "check the current configuration status" or an equivalent description (e.g., "bootstrap scan", "system self-check", "setup check", "run the configuration scan"). Do not enter Bootstrap Mode otherwise.
+
+**When invoked**, the agent:
+
+- Reads `bootstrap/README.md` (entry contract) and `bootstrap/checks.md` (normative checklist).
+- Runs the scan read-only, recording PASS / WARN / FAIL / SKIP with evidence, and fills a copy of `checks.md` in the host-specific temporary directory.
+- Reports to the user which items are not properly set up, with recommended values and the approach to modify them; never modifies system configuration automatically.
+- Applies the invariants in `bootstrap/README.md`: read-only, secrets presence-only, no skill self-checks, no network checks.
+
+Packaging/reinstall of the skill (post-edit maneuvers) is outside this mode and requires explicit user direction.
+
 ## Integration Notes
 
 - Apply the Instruction Precedence and Explicit User Overrides principle before resolving any protocol interaction
@@ -243,6 +292,7 @@ Apply these patterns to enhance prompt quality and response reliability:
 - Prompt engineering patterns compose with core protocols: apply RTCF before Clarification Protocol to structure ambiguous requests; use Chain-of-Reasoning within CTAGV's Acquire phase; apply Verification Hooks at CTAGV's Verify phase
 - Apply Clarification when ambiguity remains after the source-authority gate; honor explicit scoped user resolution or waiver under the precedence principle
 - Context Drift Governance provides the structural backbone for execution
+- Tool Failure & Retry Governance composes with Context Drift Governance iteration caps, pre-edit-safety.md Failure and Rollback, and the approval pipeline in approval-briefing.md
 - Reference Verification applies at the Acquire phase of CTAGV
 - RAG Pattern extends Reference Verification with structured retrieval
 - Explicit Constraint feeds into Context Drift Governance's constraint files
