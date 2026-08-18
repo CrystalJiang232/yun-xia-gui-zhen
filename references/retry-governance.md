@@ -29,12 +29,19 @@ Classify error-code-first, then HTTP status. Never classify by status code alone
 | Deterministic (fatal) | 4xx default (400/401/403/404/422); schema or validation errors; DB structural errors (missing column or table); missing or invalid tool; authorization denial; any unclassifiable failure | No retry; halt-and-report (Section 5) |
 | LLM-recoverable | Malformed tool arguments, parse failures, bad tool output | Feed the error back to the model at most once; never same-shape retry |
 | User-fixable | Missing information, unclear instructions | Pause and ask; human-in-the-loop |
+| No-result (empty) | Successful call but empty/null/irrelevant result | Do not re-run the same path; clarify requirements or switch retrieval strategy (Section 5) |
+| Repeated failure | Same terminal branch reached after the retry/loop budget | Halt-and-report; human handoff or circuit breaker (Section 5) |
 
 Notes:
 - A 400 paired with a transient error code (for example RequestTimeout) is retried; a 400 with a validation error is not. Error code wins.
 - A 409 Conflict is retried only when idempotency proves the effect or the resource is temporarily locked; otherwise treat it as deterministic.
 - A 503 with Retry-After is classified as throttling (server-directed wait); a 503 without Retry-After is transient.
 - When classification is uncertain, treat the failure as deterministic. When in doubt, halt-and-report rather than retry.
+
+**Degradation branches** (two terminal paths beyond retry):
+
+- **No-result / empty** → do not re-run the same failing path. Clarify the requirement or switch to an alternate retrieval/query strategy; if still no result, halt-and-report.
+- **Repeated failure** → after the retry/loop budget is exhausted, halt-and-report, escalate to a human, or trip a **circuit breaker**: after N consecutive failures, stop calling the failing component, periodically probe (half-open) with limited test traffic, and recover only on success. N and probe counts are tunable defaults.
 
 ## Bounded Retry Policy
 
@@ -49,7 +56,7 @@ Notes:
 
 - Consecutive tool-failure cap: 3 failures in a row terminates the failing path
 - Identical-call detection: same tool name plus same arguments repeated beyond the threshold (default 3-5) signals a loop; stop immediately
-- Compose with context-drift-governance.md Mode A iteration caps and bounded verification (max 2 refinement rounds); the tightest cap wins
+- Compose with context-drift-governance.md Mode A Definition of Done + iteration/step caps and working-set token budget, and bounded verification (max 2 refinement rounds); the tightest cap wins
 - On loop-guard exhaustion, apply the Halt-and-Report Contract (Section 5)
 
 ## Halt-and-Report Contract

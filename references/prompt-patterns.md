@@ -5,6 +5,7 @@
 - [RTCF Template](#rtcf-template)
 - [Explicit Constraint](#explicit-constraint)
 - [Chain-of-Reasoning Trigger](#chain-of-reasoning-trigger)
+- [Reflection / Self-Correction](#reflection--self-correction)
 
 ---
 
@@ -203,3 +204,31 @@ A structured reasoning chain follows these phases:
 - **Premature selection**: Deciding on an approach before completing the Explore phase
 - **Missing trade-offs**: Analyzing options without honest evaluation of downsides
 - **Infinite reasoning**: Getting stuck in analysis paralysis; set explicit time/depth limits
+
+---
+
+## Reflection / Self-Correction
+
+### Overview
+
+A named generate → critique → revise loop that catches and corrects errors before a task is marked complete. Use it to reduce format, tool-parameter, citation, and factual errors on outputs with checkable criteria.
+
+### The Loop
+
+```
+Generate → Critique (self-check OR separate critic) → Revise → [Gate] → repeat (bounded)
+```
+
+- **Self-check**: the same model reviews its own output against the requirements (open-ended quality).
+- **Separate critic**: a dedicated evaluator pass grades the output against an explicit rubric (objective, checkable criteria such as format, required parameters, citations, schema).
+- **Quality gate**: iterate only until a pass/fail rubric passes; cap the iterations (e.g., 1–3 rounds) so refinement cannot run unbounded.
+
+### Failure-Trajectory → Memory
+
+Persist the (error, critique, correction) tuple from each failure — as short-term (episodic, within-task) and long-term (retrievable across tasks) memory — so the same class of mistake is not repeated.
+
+### Anti-Patterns
+
+- **Unbounded refinement**: iterating without a cap or a quality gate (adds latency and cost).
+- **Critique theater**: applying the critique step without acting on its findings.
+- **Overclaiming**: asserting "reduces hallucination" without a measurement; prefer "reduces detectable errors / improves correctness on checkable criteria".

@@ -80,6 +80,14 @@ When external verification cannot be obtained:
 2. **Downgrade confidence** — State "unverified; recommend independent confirmation" with clear marking
 3. **Use sandbox testing** — If the claim is about code behavior, test it in an isolated environment and report results as empirical evidence
 
+## Handling Conflicting Sources
+
+When two or more verified sources make contradictory claims:
+
+1. **Rank** the conflicting evidence by **source authority**, then **recency**, then **permission level**; more lower-tier sources do not outweigh a missing higher-authority match.
+2. **Do not silently blend or pick a favorite** — run an explicit conflict check and, in the output, **disclose the conflict with citations** and state which source you relied on and why.
+3. If no source clearly dominates, present the conflict to the user and let them decide or designate an authoritative source.
+
 ## Session Output Format
 
 For each externally verified perspective, include:

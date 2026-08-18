@@ -12,6 +12,7 @@
 - Verification Hooks Pattern
 - Verification Execution Log
 - File Hygiene
+- Effort & Cost Budgeting
 - Integration with Other Protocols
 - Emergency Pause
 
@@ -148,6 +149,15 @@ Reference this log in every output until the activation is restored or waived. T
 
 Create and preserve the registry defined in [pre-edit-safety.md](pre-edit-safety.md). Initialize it minimally before task work, then record explicit source approval and protection readiness before any implementation read or task-artifact write.
 
+### 5. State Schema Discipline
+
+Give the session state files a **contract shape** to prevent state explosion and context overflow:
+
+- Define an explicit, typed **state schema** (explicit fields and types) that lists **only the necessary variables** the task actually reads or writes; omit derived or redundant data.
+- Define **update rules** per field (append vs last-value-wins) so concurrent or repeated updates merge predictably instead of clobbering or exploding state.
+- Treat the schema as a **validation boundary**: a missing or unexpected field fails fast rather than drifting silently.
+- Keep stored state minimal by design; add a field only when a phase genuinely consumes it.
+
 ## Phase-by-Phase Execution Rules
 
 ### Phase C — Constraints
@@ -224,8 +234,9 @@ Each chunk executor MUST consume an accepted Protection Status Registry state an
 
 For Mode A (single-agent CTAGV), each task must set an explicit satisfiable termination condition and a maximum iteration/step cap before execution begins:
 
-- **Termination condition**: a concrete, satisfiable criterion defining when the task is done (tied to the task's verification hooks).
-- **Iteration/step cap**: a hard maximum on loop iterations or steps. Hitting it follows the terminal transition owned by [pre-edit-safety.md](pre-edit-safety.md).
+- **Definition of Done (termination condition)**: a concrete, satisfiable criterion defining when the task is done, written in prose (what counts as done, what counts as blocked) and tied to the task's verification hooks. The loop stops on DoD satisfaction, on a no-progress signal, or on the step ceiling — never by continuing indefinitely.
+- **Iteration/step cap**: a hard maximum on loop iterations or steps, set through the host framework's native limit when available (e.g., a recursion/step limit, `max_turns`). Derive the ceiling from the task's declared step estimate (`ceiling = base + margin × estimated_steps`, with a global hard max) rather than a hardcoded vendor integer; coefficients are skill-level tunable defaults. Hitting the cap follows the terminal transition owned by [pre-edit-safety.md](pre-edit-safety.md).
+- **Working-set token budget**: keep the run's working set within a percentage of the model's context window (e.g., ≤ ~90%), compacting (summarizing) or trimming history when the threshold is crossed and reserving headroom for output; keep per-response `max_tokens` (a vendor parameter) conceptually separate. Percentages are tunable defaults, not authoritative.
 - **Chunked execution for large edits**: a large single-session edit/write task is split into ordered chunks rather than carried in one stretch. Between chunks, checkpoint decisions and per-file state (hash/mtime) to the state file, and re-read the target file before each chunk write — the Mode B Artifact State Log's staleness guard, applied inline. Context drift makes an un-checkpointed long edit session prone to the same stale-overwrite failure as unlogged sequential subagents — the general single-agent analogue is [edit-cas-gate.md](edit-cas-gate.md).
 
 ## Verification Hooks Pattern (Extended)
@@ -272,6 +283,23 @@ A verification hook must be:
 - Apply cleanup, backup retention, termination directives, and status preservation only as specified by [pre-edit-safety.md](pre-edit-safety.md); do not introduce a second cleanup algorithm here.
 - **Workspace**: Only final deliverables in the workspace
 - **No pollution**: Never write intermediate state to the project directory
+
+**Memory hygiene (lifecycle rules for stored state):**
+
+- **Short-term vs long-term**: keep short-term (thread-scoped) memory trimmed; promote only durable, structured facts to long-term storage.
+- **Summarize, don't retain verbatim**: when history approaches the working-set budget, replace older turns with a running summary (compaction); keep the summary plus recent raw turns.
+- **Clip/trim**: drop or edit old turns including tool results; trim to the token budget before each call.
+- **TTL/expiry**: apply a time- or size-based expiry to stored fragments and tool results so stored state cannot grow without bound.
+- These rules are tunable per model/context; mark thresholds as defaults, not authoritative.
+
+## Effort & Cost Budgeting
+
+Make cost/latency a first-class governance item for long or expensive tasks:
+
+- Set an **explicit token/cost budget** for the task (track tokens and cost per call/run) with a ceiling and alert.
+- **Model tiering**: route simple subtasks to small/cheap models and escalate to a larger model only when the task requires it.
+- **Monitor** tokens, call counts, and latency; act on budget alerts rather than discovering spend after the fact.
+- **Guard** runaway spend with a circuit breaker on repeated failures and by caching reused context; these are tunable defaults, not authoritative values.
 
 ## Integration with Other Protocols
 

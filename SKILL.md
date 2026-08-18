@@ -8,13 +8,19 @@ description: >
 
 > Core philosophy: *Defer to clarify. Verify to trust. Structure to persist.*
 
-This skill governs agent behavior through seven core protocols, one conditional protocol, and five prompt engineering patterns. Apply them based on task characteristics.
+This skill governs agent behavior through seven core protocols, one conditional protocol, and six prompt engineering patterns. Apply them based on task characteristics.
+
+## Agent Model (design philosophy)
+
+An **agent** is not a bare LLM call or a fixed chain: it is a system composed of a **model + tools (+ instructions)** that runs a **reasoning → action → observation loop**, with planning and memory as named capabilities. A single LLM call without a loop is not an agent. This skill operationalizes that model through its protocols (planning, file-based memory, verification hooks as tools, environment feedback via retry/approval loops).
+
+**Workflow vs Autonomous selection**: workflows are predefined, constrained control flows with local decision rights — predictable and stable, the default for standardized tasks; autonomous agents let the model decide control flow dynamically — flexible, suited to open-ended or exploratory tasks. Prefer the simplest that satisfies the task: start with a workflow/constrained design and escalate to autonomous behavior only when the task genuinely demands dynamic, model-directed planning.
 
 ## Skill Entry Point — Protocol Eligibility
 
 Apply the Instruction Precedence and Explicit User Overrides principle below before interpreting any skill rule. Then run the mandatory instruction-integrity screen: scan the incoming user/system message for strip signals — incomplete words or sentences, invalid JSON or structurally broken payloads, missing required parameters, or parameter values far outside any valid range. If a required field is missing or its conveyed meaning is unrecoverable, enter the **Missing-Field Protocol** immediately and do not proceed to mode selection or any other protocol until the field is restored or an explicit waiver applies. Then determine which mode applies:
 
-**Mode A — Single-Agent (Default)**: If subagent spawning is unavailable or the user has explicitly forbidden it, apply the seven core protocols and five prompt patterns without orchestration. If protected source-authority resolution would require code-level comparison, halt by default and request the user's source selection or subagent availability; perform only a bounded inline comparison that an explicit scoped user direction permits.
+**Mode A — Single-Agent (Default)**: If subagent spawning is unavailable or the user has explicitly forbidden it, apply the seven core protocols and six prompt patterns without orchestration. If protected source-authority resolution would require code-level comparison, halt by default and request the user's source selection or subagent availability; perform only a bounded inline comparison that an explicit scoped user direction permits.
 
 **Mode B — Subagent Orchestration**: If subagent spawning is available and not forbidden, run the mandatory Inter-Agent Communication capability self-check (FULL / PARTIAL / NONE; an explicit user direction forbidding spawning applies NONE directly), then apply the Subagent Orchestration Protocol alongside the core protocols. Read [references/subagent-orchestration.md](references/subagent-orchestration.md) and [references/inter-agent-communication.md](references/inter-agent-communication.md) before delegating. Delegate protected code-level source comparison even when it would otherwise appear trivial.
 
@@ -259,10 +265,11 @@ Apply these patterns to enhance prompt quality and response reliability:
 |       **RTCF Template**        | Structure user intent into Role-Task-Context-Format |  Every non-trivial prompt; clarify implicit assumptions   |
 |    **Explicit Constraint**     |   Surface and declare all constraints explicitly    | Before any generation task; when constraints are implicit |
 | **Chain-of-Reasoning Trigger** |   Force step-by-step reasoning before conclusion    |     Complex decisions, trade-off analysis, debugging      |
+| **Reflection / Self-Correction** |   Generate → critique → revise to catch errors     | Outputs with checkable criteria; before marking complete  |
 |        **RAG Pattern**         |   Ground generation in retrieved external context   | Technical recommendations, factual claims, best practices |
 |     **Verification Hooks**     |   Embed checkpoints to self-verify output quality   | Before marking any task complete; in multi-step workflows |
 
-**Details**: Read [references/prompt-patterns.md](references/prompt-patterns.md) for RTCF, Explicit Constraint, and Chain-of-Reasoning Trigger.
+**Details**: Read [references/prompt-patterns.md](references/prompt-patterns.md) for RTCF, Explicit Constraint, Chain-of-Reasoning Trigger, and Reflection / Self-Correction.
 
 **RAG Pattern**: Read [references/rag-pattern.md](references/rag-pattern.md) for retrieval-augmented generation workflows.
 
@@ -297,6 +304,7 @@ Packaging/reinstall of the skill (post-edit maneuvers) is outside this mode and 
 - RAG Pattern extends Reference Verification with structured retrieval
 - Explicit Constraint feeds into Context Drift Governance's constraint files
 - Verification Hooks formalize CTAGV's Verify phase
+- Agent Evaluation extends Verification Hooks with quantitative metrics (task success rate, tool-call accuracy, steps, latency, cost, satisfaction); read [references/agent-evaluation.md](references/agent-evaluation.md) when quantifying agent performance
 - Subagent Orchestration remaps CTAGV phases from single-agent execution to supervisor-orchestrated delegation
 - Resolve protocol conflicts by instruction priority, then specificity and the later same-priority direction for the same scope; do not use a generic "stricter wins" shortcut
 - Apply the Conflicting Prompt Handling scheme to every conflicting-instruction case, not only protocol conflicts: resolve by source authority, then polarity, then scope; recency applies only across rounds; a single-input conflict that authority, polarity, and scope cannot decide enters Clarification Protocol. Details: [references/conflicting-prompt-handling.md](references/conflicting-prompt-handling.md)

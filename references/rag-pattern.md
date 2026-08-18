@@ -19,6 +19,8 @@ RAG grounds AI-generated content in externally retrieved information rather than
 
 **Routing note**: When all relevant corpus fits in the context window, direct long-context injection can outperform retrieval (arXiv 2407.16833, 9 datasets). RAG remains required for dynamic or fast-evolving data, cost/latency-sensitive cases, and audit or permission-control needs. Route per situation, not as a universal default: rows marked **Required** below keep their verification obligation, but the MEANS may be retrieval OR full-corpus injection, with the choice stated.
 
+**Recency-first routing**: for fast-moving or highly time-sensitive topics, route the query to real-time tools/APIs (function calling, live connectors, live search) rather than a static index. Keep the index fresh via incremental indexing on update streams (refresh only changed documents, not a full rebuild), and cache frequently queried results with a TTL plus active invalidation on source update; expose freshness so staleness is observable, not assumed.
+
 | Scenario | RAG Activation |
 |----------|---------------|
 | Recommending specific library versions or APIs | **Required** |
@@ -68,6 +70,8 @@ Execute searches and collect candidate sources. Apply the source hierarchy from 
 3. **Recency filter**: Prefer sources within the last 2 years
 4. **Diversity**: Mix documentation, tutorials, and source code references
 
+**Permission isolation at the data layer**: enforce access control at retrieval time, not by prompt-level prohibition alone. Attach ACL/permission metadata (identity/role/department/permission groups) to documents/chunks/embeddings, and inject the authenticated principal's entitlements as filter conditions into retrieval queries (never from user-supplied text). Unauthorized content must never enter the model context.
+
 ### Phase 3: Context Integration
 
 Integrate retrieved information into the generation context:
@@ -88,7 +92,7 @@ Integrate retrieved information into the generation context:
 **Rules**:
 - Quote directly for precise claims
 - Summarize for general understanding
-- Flag contradictions between sources
+- **Rank and disclose conflicts**: when sources contradict, rank the conflicting evidence by source authority, then recency, then permission level; run an explicit conflict-detection check over retrieved chunks before generation, and **disclose the conflict in the output with citations** rather than silently blending
 - Note recency and deprecation warnings
 - Place long reference documents first and the user query last when assembling retrieved context (up to +30% response quality per Anthropic long-context guidance)
 
@@ -130,7 +134,7 @@ Every RAG-grounded response must include source attribution:
 | Failure | Detection | Response |
 |---------|-----------|----------|
 | No relevant sources found | Empty or irrelevant search results | State the gap; recommend user provides reference material |
-| Conflicting sources | Two sources make contradictory claims | Present both with their contexts; let user decide or seek authoritative source |
+| Conflicting sources | Two sources make contradictory claims | Rank by source authority, then recency, then permission; disclose the conflict with citations in the output and let the user decide or seek an authoritative source |
 | Outdated sources | All sources are >2 years old for fast-moving tech | Flag obsolescence risk; recommend verification |
 | paywall/blocking | Sources are inaccessible | Search for open-access alternatives; state limitation |
 

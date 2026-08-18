@@ -26,6 +26,8 @@
 
 Before consulting the matrix, confirm the pre-gate: subagent spawning is justified only when the task is genuinely parallelizable or exceeds single-context capacity, AND the coordination cost (roughly 10–15x tokens per delegated unit of work) is justified by the payoff. If the pre-gate fails, stay inline unless the protected source-candidate comparison rule below applies.
 
+**Granularity is a quality/cost axis, not just an implementation detail.** Splitting too finely raises coordination cost (each split adds a delegation hop — message passing, context transfer, latency); splitting too coarsely degrades worker output (an under-scoped worker lacks a clear success criterion and drifts or invents content). Before delegating, estimate (a) how much shared intermediate state the subtasks need and (b) whether each subtask has a self-contained, checkable goal. High interdependence → prefer fewer/coarser agents (or a single agent); independent, checkable subtasks → finer granularity is safe. Treat messages/tokens per delegation and rework rate as the cost signal.
+
 Spawn a subagent when **ANY** of the following conditions are met:
 
 | Condition | Rationale | Examples |
