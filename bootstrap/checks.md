@@ -139,6 +139,26 @@ Status: ACTIVE (2026-08-18). Approved checklist; companion to `README.md` in thi
 - Severity: P0 (auth exemption).
 - Record: PASS / WARN / FAIL + evidence (presence boolean only).
 
+### CHK-05-08 — Standing approval rules scoped
+
+- Applicability: always when the host exposes standing-approval primitives (prefix rules / allowlists / execpolicy); otherwise SKIP with reason.
+- Inspect: standing-approval configuration (host-specific, e.g., `<config-path>` rules) and the scope of each rule.
+- Expected: routine command classes covered by narrow, categorical rules; no dangerously broad rules (e.g., no bare interpreter or shell wildcard).
+- Recommended: narrow allowlist paired with sandbox boundaries; rules proposed by the agent, granted only by the user/host.
+- Severity: P1.
+- Record: PASS / WARN / SKIP + evidence.
+- Remediation: propose scoped rule additions per host docs; never self-grant.
+
+### CHK-05-09 — No-op suppression understood
+
+- Applicability: always.
+- Inspect: host approval behavior for read-only/no-op commands (auto-approved or suppressed?).
+- Expected: recorded; the skill never fabricates no-op approval requests.
+- Recommended: record host behavior in constraints; route approvals only through genuinely gated actions.
+- Severity: P1.
+- Record: PASS / WARN + evidence.
+- Remediation: update in-skill instructions to remove any test/no-op request conventions.
+
 ---
 
 ## Area 07 — Channel / subagent capability
@@ -164,6 +184,15 @@ Status: ACTIVE (2026-08-18). Approved checklist; companion to `README.md` in thi
 - Severity: P1.
 - Record: PASS / WARN + evidence.
 - Remediation on WARN: continue in Mode A (single-agent) and note the routing consequence.
+
+### CHK-07-04 — Free-text approval channel capability
+
+- Applicability: always.
+- Inspect: whether the host's approval/clarification channel accepts free text (ask_user-alike), is binary-only, or is absent.
+- Expected: recorded as free-text / binary-only / absent.
+- Recommended: recorded; free-text enables direct type-to-confirm, binary-only requires the two-phase chat protocol.
+- Severity: P1.
+- Record: PASS / WARN + evidence.
 
 ---
 
