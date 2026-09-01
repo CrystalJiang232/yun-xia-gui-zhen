@@ -25,6 +25,8 @@ A structured working loop to ensure reliable in-session memory, constraint compl
 
 If the host environment performs history compaction, task goals and hard constraints MUST be written to the external state files (constraints.md, todo.md) BEFORE compaction occurs. Anchor summaries may compress narrative detail but never compress goals or hard constraints.
 
+**Context engineering relation**: This file is the session-scope slice of [context engineering](context-engineering.md). Its compaction anchors and memory hygiene implement the Compress and Write operations.
+
 ## The CTAGV Working Loop
 
 Every task must follow this five-phase cycle visibly in-session. Minimal state initialization and a mandatory preflight gate occur before Phase A whenever implementation reads or workspace writes are possible:

@@ -46,6 +46,7 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 |   Instruction stripped/truncated or a required field missing | **Missing-Field Protocol**     | Clarification Protocol (after field restored) |
 |   External facts, technical claims, or references needed    |   **Reference Verification**   |  Clarification Protocol  |
 |            Multi-step complex task (3+ actions)             |  **Context Drift Governance**  |  Clarification Protocol  |
+|   Long-horizon / multi-step / tool-using or retrieval-heavy |       **Context Engineering**  |  Context Drift Governance  |
 |                Starting ANY non-trivial task                |  **Context Drift Governance**  |  Apply others as needed  |
 |              Any interrupt or halt/stop/wait steering       | **Interrupt Recovery Protocol** |  Clarification Protocol  |
 |    User asks to elaborate/explain or requests quick answer  |         **Quick Ask Mode**      |     Clarification Protocol |
@@ -232,6 +233,19 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 - No auto-deviation: alternatives require the approval pipeline ([approval-briefing.md](references/approval-briefing.md)), never silent workarounds
 - Prompt discipline is a soft constraint; reinforce at system level via the framework-tuning attachment prompt
 
+#### 7b. Context Engineering (Context-Window Governance)
+
+**When**: Any long-horizon, multi-step, tool-using, or retrieval-heavy task; any task whose working set risks exceeding the window or where context contamination is likely.
+
+**Process**: Read [references/context-engineering.md](references/context-engineering.md)
+
+**Summary**:
+- Treat the context window as a finite budget, not a buffer.
+- Apply Write / Select / Compress / Isolate at each CTAGV phase boundary.
+- Watch for context poisoning, distraction, confusion, and clash.
+- Use sub-agents as context isolation (read-heavy work), not as an org chart.
+- Enforce a context-budget hook (max tokens / turns / cost) as a stop condition.
+
 ### Conditional Protocol
 
 #### 8. Subagent Orchestration Protocol (REQUIRED when Mode B)
@@ -299,6 +313,7 @@ Packaging/reinstall of the skill (post-edit maneuvers) is outside this mode and 
 - Prompt engineering patterns compose with core protocols: apply RTCF before Clarification Protocol to structure ambiguous requests; use Chain-of-Reasoning within CTAGV's Acquire phase; apply Verification Hooks at CTAGV's Verify phase
 - Apply Clarification when ambiguity remains after the source-authority gate; honor explicit scoped user resolution or waiver under the precedence principle
 - Context Drift Governance provides the structural backbone for execution
+- Context Engineering governs the context window as a budget across CTAGV; it subsumes the RAG Pattern (one Select/Compress route) and the Isolate function of Sub-agent Orchestration
 - Tool Failure & Retry Governance composes with Context Drift Governance iteration caps, pre-edit-safety.md Failure and Rollback, and the approval pipeline in approval-briefing.md
 - Reference Verification applies at the Acquire phase of CTAGV
 - RAG Pattern extends Reference Verification with structured retrieval

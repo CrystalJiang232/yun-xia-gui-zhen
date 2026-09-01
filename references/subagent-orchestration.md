@@ -4,6 +4,8 @@
 >
 > Core principle: *The main agent is a supervisor — it ensures work gets done, it does not do all the work itself.*
 
+> **Context engineering relation**: Sub-agents serve as context isolation — the Isolate operation of [context engineering](context-engineering.md) — for read-heavy, parallelizable work; use one-agent-one-context for write-heavy work.
+
 > **Precedence**: When subagent orchestration is active (Mode B), the rules in this file are required, not advisory. Explicit user directions override this skill's defaults only when higher-priority system, developer, workspace, safety, and user constraints permit the override. Interactive clarification with the user is always preferred over silently working around a rule.
 
 ---

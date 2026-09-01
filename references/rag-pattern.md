@@ -15,6 +15,8 @@
 
 RAG grounds AI-generated content in externally retrieved information rather than relying solely on internal knowledge. Use this pattern when technical accuracy, factual correctness, or up-to-date information is critical.
 
+> **Context engineering relation**: This pattern is the Select/Compress route of [context engineering](context-engineering.md); see Context-Window Governance for the broader discipline.
+
 ## When to Activate
 
 **Routing note**: When all relevant corpus fits in the context window, direct long-context injection can outperform retrieval (arXiv 2407.16833, 9 datasets). RAG remains required for dynamic or fast-evolving data, cost/latency-sensitive cases, and audit or permission-control needs. Route per situation, not as a universal default: rows marked **Required** below keep their verification obligation, but the MEANS may be retrieval OR full-corpus injection, with the choice stated.
