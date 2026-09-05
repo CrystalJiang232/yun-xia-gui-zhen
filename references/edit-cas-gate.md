@@ -6,7 +6,7 @@ Keep this file as one unit for now; the numbered sections are the intended split
 ## 1. Hash Register
 
 - Record `sha256(<absolute path>)` after every successful write that changes an existing file, keyed by the normalized absolute path. Apply to edit-tool writes and script/command mutations alike.
-- Prefer the session state file (e.g. `/tmp/qrh-session/cas-register.md`); it survives compaction. In-session memory is acceptable only as a fallback and must be treated as fragile.
+- Prefer the session state file (e.g. `.agent/state/cas-register.md`); it survives compaction. In-session memory is acceptable only as a fallback and must be treated as fragile.
 - New files: no baseline until the first write completes; record the hash immediately after that write. The first re-edit of the file then enters the gate.
 - Reuse the `Before-state`/`After-state` fields of the Protection Status Registry (pre-edit-safety.md) as the audit trail; the CAS register is the active pre-write baseline.
 

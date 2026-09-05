@@ -18,6 +18,8 @@
 
 Defer all work until requirements are explicit and exact. This protocol governs the interactive clarification loop between agent and user.
 
+**Clarification package (anchoring instruction, default-on).** Clarification is the default for ANY non-trivial task (multi-step, ambiguous, high-risk, or state-mutating), even when the task looks approachable at a glance. To prevent redundant interrupts, bundle all open decision points into ONE **clarification package** (a single block, minimal items) instead of asking one question at a time. Treat the state-persistence confirmation and any stale-state reconcile decision as items of that same package.
+
 ## When to Activate
 
 Activate when ANY of these conditions are met:
@@ -30,6 +32,12 @@ Activate when ANY of these conditions are met:
 - User says "do what you think is best" without prior established patterns
 
 **Carve-out — Missing-Field Protocol**: when the instruction's conveyance is damaged (stripped/truncated message, invalid structured payload, missing parameter, or a parameter far outside any valid range), the missing field is NOT a clarification point under this protocol. Do not offer options, representations, plan briefs, or a recommended default for it; apply the Missing-Field Protocol (missing-field-protocol.md): plain field request, wait loop, waiver branch.
+
+## Defaults and Overrides
+
+- **Default-on**: clarify by default on any non-trivial task; the listed triggers are illustrative, not exhaustive.
+- **Low-effort override (task-based)**: a clearly trivial and fully reversible task with one obvious approach may skip or shrink the package; the agent states its brief assumption instead of interrupting.
+- **Waiver override (prompt-based)**: an explicit user "don't clarify" or pre-authorized no-interrupt instruction permits proceeding; record the waiver's exact wording and scope. Never infer a waiver from silence, a timeout, or a default/system response (see Clarification Channel Governance §A). Missing-Field, pre-edit, and channel rules still bind when a waiver applies.
 
 ## Clarification Loop
 
@@ -48,6 +56,13 @@ Activate when ANY of these conditions are met:
 For each ambiguity point, make the decision substance explicit, then select the preview representation from the decision's granularity and communicative fit. Whether the surrounding task contains code does not select the representation.
 
 This phase does not apply to a field governed by the Missing-Field Protocol (missing-field-protocol.md); that protocol's plain field request replaces options, representations, and defaults.
+
+**Package grouping**: bundle every open decision point into a single clarification package, present all items at once (minimal but complete), and include the standing items below.
+
+### Standing Package Items
+
+- **State-persistence item (exact line)**: "Write durable state to `<working-dir>/.agent/state/` (enabled by default); confirm / correct." Include it whenever `.agent/state/` does not yet exist or is being (re)initialized.
+- **State-reconcile item**: only when existing state is stale / inexplicable / inconsistent with the current project status — offer overwrite-from-scratch, amend-on-top, or leave (move / absent); see context-drift-governance.md, File Hygiene.
 
 ### Required Decision Substance
 

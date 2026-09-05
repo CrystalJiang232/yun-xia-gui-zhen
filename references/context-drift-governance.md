@@ -51,7 +51,9 @@ All five phases and every applicable protection transition must use actual tool 
 
 Before task work or implementation reads, create the four minimal state files below. Populate source approval and protection fields through metadata-only preflight before reading implementation contents or writing task artifacts.
 
-### 1. Constraints File (`/tmp/qrh-session/constraints.md`)
+**State location (durable)**: Keep these governance state files in the repository working directory under `.agent/state/` (e.g. `constraints.md`, `todo.md`, `verification.md`, `protection-status.md`). State-file writes are **enabled by default**; the agent writes them and the user confirms/corrects. Surface this write behavior as part of the clarification package, and proactively ask the user for durable TODO / status / decision entries. Use the OS-temp directory only for short-lived intermediates (e.g. non-git-edit backups, code-work byproducts).
+
+### 1. Constraints File (`.agent/state/constraints.md`)
 
 Classify constraints as global or task-specific. Apply **Explicit Constraint** pattern: surface all hard, soft, and negative constraints:
 
@@ -70,7 +72,7 @@ Classify constraints as global or task-specific. Apply **Explicit Constraint** p
 - [SOFT] Constraint B
 ```
 
-### 2. TODO File (`/tmp/qrh-session/todo.md`)
+### 2. TODO File (`.agent/state/todo.md`)
 
 Comprehensive task list with full detail:
 
@@ -105,7 +107,7 @@ Status: DO NOT EXECUTE until deferred points are resolved
 
 On any new round opening with an `UNEXECUTED` next-round proposal, read it before planning; executing it before the linked deferred points resolve is a protocol violation.
 
-### 3. Verification Hooks File (`/tmp/qrh-session/verification.md`)
+### 3. Verification Hooks File (`.agent/state/verification.md`)
 
 Designated by the user or derived from constraints. Resolve hook precedence by instruction priority first, then applicable scope, then recency at equal priority and scope. Use strictness only to choose among equally authorized, compatible hooks; strictness never overrides a higher-priority, narrower, or newer conflicting instruction. Apply **Verification Hooks** pattern: embed specific, checkable conditions:
 
@@ -147,7 +149,7 @@ Disclosure: interpreted semantic / suggested missing field / completed semantic 
 
 Reference this log in every output until the activation is restored or waived. The wait loop's deferral on empty/system-default/timeout responses follows Clarification Channel Governance §A (clarification-protocol.md): mark deferred, halt the round, persist the UNEXECUTED next-round proposal, and await the user.
 
-### 4. Protection Status Registry (`/tmp/qrh-session/protection-status.md`)
+### 4. Protection Status Registry (`.agent/state/protection-status.md`)
 
 Create and preserve the registry defined in [pre-edit-safety.md](pre-edit-safety.md). Initialize it minimally before task work, then record explicit source approval and protection readiness before any implementation read or task-artifact write.
 
@@ -194,7 +196,7 @@ After the gate passes, inject only the minimal high-signal context needed for th
 - Consume `ready_git`, `ready_backed_up`, or `ready_no_backup` for every Generate scope; `ready_compare` and `ready_read` never enter Generate
 - Prefer editing existing files over creating new ones
 - Before any write to a file already written this session, re-hash and compare against the session CAS register ([edit-cas-gate.md](edit-cas-gate.md)); mismatch ⇒ re-read before editing (whole file < 100 KB, targeted section otherwise; escalate for core files). Prefer scoped edits; global substitution only after a full re-read
-- Keep intermediate files in the OS-temp session subdirectory (see File Hygiene); redirect code-work byproducts there where the toolchain allows, else record them in the Cleanup Registry
+- Keep durable governance state in `.agent/state/` (see File Hygiene); keep only short-lived intermediates and code-work byproducts in the OS-temp session subdirectory, else record them in the Cleanup Registry
 - Do not pollute the workspace with temporary files
 - Show generation actions explicitly
 
@@ -281,10 +283,10 @@ A verification hook must be:
 
 ## File Hygiene
 
-- Put governance state and intermediates in the permitted active-session temporary location by default, and register their provenance and status.
+- Put durable governance state in the repository working directory under `.agent/state/` by default (agent writes; user confirms); keep only short-lived intermediates in the active-session temporary location, and register their provenance and status.
 - Apply cleanup, backup retention, termination directives, and status preservation only as specified by [pre-edit-safety.md](pre-edit-safety.md); do not introduce a second cleanup algorithm here.
 - **Workspace**: Only final deliverables in the workspace
-- **No pollution**: Never write intermediate state to the project directory
+- **No pollution**: Durable state lives only in `.agent/state/` (explicit override of the "no project-dir writes" default); never write other intermediate state to the project directory.
 
 **Memory hygiene (lifecycle rules for stored state):**
 
@@ -293,6 +295,13 @@ A verification hook must be:
 - **Clip/trim**: drop or edit old turns including tool results; trim to the token budget before each call.
 - **TTL/expiry**: apply a time- or size-based expiry to stored fragments and tool results so stored state cannot grow without bound.
 - These rules are tunable per model/context; mark thresholds as defaults, not authoritative.
+
+**Reconcile stale state (required on state load):**
+
+- Validate each state file on load: does it exist; is it fresh (last-updated marker); does its version/schema match; is it consistent with the current project status?
+- If a file is inexplicable, stale, or inconsistent with current reality, DO NOT act on it silently. Escalate a single **state-reconcile decision item** in the clarification package.
+- Offer: (a) **overwrite from scratch** — drop all stale items (default when the state is clearly unreliable, schema-incompatible, or the diff is large); (b) **amend on top** — keep and fix the small diff (default when mostly valid); (c) **leave it** — archive or move the file elsewhere, or omit it (default when ambiguous).
+- Before overwriting or amending, back up the existing file (see pre-edit-safety.md backup rules).
 
 ## Effort & Cost Budgeting
 

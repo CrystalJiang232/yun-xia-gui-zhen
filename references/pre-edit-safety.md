@@ -186,7 +186,7 @@ Registered protection backups are recovery aids, not permission to restore autom
 
 ## Protection Status Registry
 
-Store the registry in the active session state directory as `protection-status.md`. Preserve it through normal cleanup. Use this minimum schema:
+Store the registry in the repository working directory under `.agent/state/protection-status.md` (durable). Preserve it through normal cleanup. Use this minimum schema:
 
 ```markdown
 # Protection Status

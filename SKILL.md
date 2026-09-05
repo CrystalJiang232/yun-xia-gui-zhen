@@ -91,7 +91,7 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 
 9. **Quick Ask Mode** — On a narrow elaboration, explanation, quick-answer, or post-work report request that passes the mandatory semantic check, do not edit workspace files, do not spawn subagents, and answer from main-session context only. Prefer no status-file writes. If the answer is uncertain, state the caveat; if unavailable, ask permission for external search. Prefer normal-task interpretation when the request is ambiguous between research and quick ask.
 
-5. **File-Based State** — Session memory is unreliable. A file of several hundred bytes is worth a context window of a trillion tokens. Persist state (constraints, TODOs, verification hooks) to files.
+5. **File-Based State** — Session memory is unreliable. A file of several hundred bytes is worth a context window of a trillion tokens. Persist state (constraints, TODOs, verification hooks) to files. Durable state lives in the repository working directory under `.agent/state/`; the agent writes it by default and the user confirms.
 
 6. **RTCF Structuring** — Before engaging with any task, internally decompose the user's intent through the RTCF lens: Role (who), Task (what), Context (background), Format (output expectation). Even when not explicitly outputting the RTCF structure, use it to ensure completeness of understanding.
 
@@ -128,6 +128,7 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 **Process**: Read [references/clarification-protocol.md](references/clarification-protocol.md)
 
 **Summary**:
+- Clarification is default-on for any non-trivial task; present all open points as one clarification package (low-effort override for trivial/reversible tasks; prompt-based waiver recorded, never inferred from silence)
 - Keep required decision substance invariant: options, plan insight, cascading impact, trade-offs, and a recommended default. Select the critical representation independently for each decision by its granularity and communicative fit
 - Prefer a compact diff only for a small, exact line-level code or documentation choice that passes the detailed selector gates; for broader decisions use fitting prose, `if ... then ...`, tables, flows or diagrams, contracts, schemas, or concise examples
 - When the user explicitly requests a consultant role and conditional guidance fits, use grouped `if ... then ...` recommendations with the same universal representation selector; conditional grouping is not a diff exception
@@ -163,7 +164,7 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 - Begin no implementation-oriented task-artifact read or write until source selection, required edit approval, and protection gates pass
 - Read constraint file before every task (repetitive reading is required, not redundant)
 - Explicitly show all five phases in-session with actual tool calls
-- Keep intermediates in the OS-specific temp directory by default; clean ordinary temporary files as the final hook, but retain externally depended files, registered backups, and backup location-status state
+- Keep durable governance state in `.agent/state/`; keep only short-lived intermediates in the OS-specific temp directory; clean ordinary temporary files as the final hook, but retain externally depended files, registered backups, and backup location-status state
 - Before editing, run the Cascade-Impact Scan ([references/cascade-impact.md](references/cascade-impact.md)); present cascade changes along-way with the main proposal, per-point via Clarification Protocol, and re-enter the pre-edit gate for new targets
 
 #### 4. QRH Generator Mode
