@@ -15,13 +15,25 @@
 
 RAG grounds AI-generated content in externally retrieved information rather than relying solely on internal knowledge. Use this pattern when technical accuracy, factual correctness, or up-to-date information is critical.
 
+> **Scope — read first**: In this skill, "RAG" means grounding generation in retrieved context. It does not imply a vector database, embeddings, chunking, or a standing index. Retrieval is whatever tool the agent actually calls; the default for files and workspace corpora is trivial lexical search over live files (`glob`/`find` for names and paths, `rg`/`grep` for content, then `read` on candidates). A semantic index is an inferior-priority branch that activates only when trivial search fails.
+
 > **Context engineering relation**: This pattern is the Select/Compress route of [context engineering](context-engineering.md); see Context-Window Governance for the broader discipline.
 
 ## When to Activate
 
-**Routing note**: When all relevant corpus fits in the context window, direct long-context injection can outperform retrieval (arXiv 2407.16833, 9 datasets). RAG remains required for dynamic or fast-evolving data, cost/latency-sensitive cases, and audit or permission-control needs. Route per situation, not as a universal default: rows marked **Required** below keep their verification obligation, but the MEANS may be retrieval OR full-corpus injection, with the choice stated.
+**Routing note**: When all relevant corpus fits in the context window, direct long-context injection can outperform retrieval (arXiv 2407.16833, 9 datasets). Retrieval remains required for dynamic or fast-evolving data and for audit or permission-control needs. Route per situation, not as a universal default: the MEANS may be live tools, trivial lexical search, full-corpus injection, or a semantic index, with the choice stated. Rows marked **Required** below keep their verification obligation regardless of the means.
 
 **Recency-first routing**: for fast-moving or highly time-sensitive topics, route the query to real-time tools/APIs (function calling, live connectors, live search) rather than a static index. Keep the index fresh via incremental indexing on update streams (refresh only changed documents, not a full rebuild), and cache frequently queried results with a TTL plus active invalidation on source update; expose freshness so staleness is observable, not assumed.
+
+**Trivial-first default (files and workspace)**: For file corpora — source code, docs, configs, the workspace — retrieval starts with the simplest exact tools: `glob`/`find` for names and paths, `rg`/`grep` for content patterns, then `read` on candidates. Follow references (imports, includes, symbol definitions) and refine the query before escalating. Agentic grep/glob retrieval reaches RAG-level fidelity for most code-search scenarios without any vector store (arXiv 2602.23368); treat a standing semantic index as the exception.
+
+**Semantic/vector branch (inferior priority)**: Activate this branch only after trivial grep/glob search has demonstrably failed, for example paraphrase-level concept queries over a large, stable corpus. When both a lexical hit and a semantic hit exist for the same need, prefer the lexical/grep result as the more authoritative source: it reflects the live corpus, while a vector index is derivative and lagging. Known vector-branch caveats:
+
+- Drifting or stale index: each commit can invalidate part of the index, and rebuilds lag behind the live corpus.
+- Single-shot top-k misses: one retrieval pass is brittle; if the first query misses, the answer is silently absent.
+- Exact-match errors: embedding similarity is not relevance; it can return look-alike identifiers and miss true definitions.
+- Index as a data copy: a private-corpus index is a standing copy with its own access-control and residency surface.
+- Flattened structure: chunked embeddings erase explicit relations (imports, call graphs, types) that lexical tools can traverse.
 
 | Scenario | RAG Activation |
 |----------|---------------|
@@ -36,10 +48,24 @@ RAG grounds AI-generated content in externally retrieved information rather than
 ## The RAG Workflow
 
 ```
-User Query → Retrieval Query Formulation → External Search →
-Source Evaluation → Context Integration → Grounded Generation →
-Attribution → Verification
+One-shot pipeline (index-era shape; brittle when the first query misses):
+User Query → Retrieval Query Formulation → Top-k Retrieval → Context Integration →
+Grounded Generation → Attribution → Verification
+
+Agentic retrieval loop (default for files and workspace):
+User Query → Tool Query (glob/find/rg) → Read Candidates → Evaluate →
+Follow References / Refine Query → Repeat until sufficient →
+Context Integration → Grounded Generation → Attribution → Verification
 ```
+
+**Agentic loop rules**:
+
+- Start with the cheapest precise tool; escalate only when results show a concrete gap.
+- Prefer exact matching for identifiers and symbols (`rg`/`glob`) over semantic similarity — similarity is not relevance.
+- Treat each result as a probe: read candidates, follow imports/definitions/cross-references, and reformulate the query from what you see; never rely on a single top-k shot.
+- Read live files over any index whose freshness or coverage you cannot verify; live reads bypass stale-index drift.
+- Stop when the question is answerable and keep outputs token-lean. (Agentic loops cost more tokens and latency than precomputed lookup; pay that cost only when task value justifies it.)
+- Then run Phases 3-5 for integration, generation, and attribution.
 
 ### Phase 1: Retrieval Query Formulation
 
@@ -62,6 +88,8 @@ Queries:
 ### Phase 2: Source Retrieval
 
 Establish Source Authority before retrieval: check workspace files, then system-scope files, then web search results only when the user has broadly authorized web search. Search system-scope files with `find` or `rg`; never assume a package path. On multiple system candidates, stop and ask which one is used unless the compiler/interpreter/library is explicitly declared.
+
+For code and workspace corpora, search live files with `glob`/`find`/`rg` first; these tools are exact, fresh, and index-free. Consult a semantic index only after trivial search demonstrably fails, and state why.
 
 Record provenance and version anchors for any retrieved source that affects output: `Scope`, `Location`, `Version`, `Retrieved`. Mark `Version` as `unverified` when it cannot be established. When local/system and web versions conflict, surface the mismatch and ask.
 
@@ -146,3 +174,4 @@ Every RAG-grounded response must include source attribution:
 - **Cherry-picking**: Selecting only sources that support a pre-formed conclusion
 - **Source laundering**: Using secondary sources without checking primaries
 - **Context stuffing**: Including irrelevant retrieved content that dilutes focus
+- **Index reflex (vector-by-default)**: Standing up an embedding index where `glob`/`grep`/`read` already answer the question.

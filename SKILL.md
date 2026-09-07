@@ -300,12 +300,12 @@ Apply these patterns to enhance prompt quality and response reliability:
 |    **Explicit Constraint**     |   Surface and declare all constraints explicitly    | Before any generation task; when constraints are implicit |
 | **Chain-of-Reasoning Trigger** |   Force step-by-step reasoning before conclusion    |     Complex decisions, trade-off analysis, debugging      |
 | **Reflection / Self-Correction** |   Generate → critique → revise to catch errors     | Outputs with checkable criteria; before marking complete  |
-|        **RAG Pattern**         |   Ground generation in retrieved external context   | Technical recommendations, factual claims, best practices |
+|        **RAG Pattern**         |   Ground generation in retrieved external context (grep/glob-first; no index default)   | Technical recommendations, factual claims, best practices |
 |     **Verification Hooks**     |   Embed checkpoints to self-verify output quality   | Before marking any task complete; in multi-step workflows |
 
 **Details**: Read [references/prompt-patterns.md](references/prompt-patterns.md) for RTCF, Explicit Constraint, Chain-of-Reasoning Trigger, and Reflection / Self-Correction.
 
-**RAG Pattern**: Read [references/rag-pattern.md](references/rag-pattern.md) for retrieval-augmented generation workflows.
+**RAG Pattern**: Read [references/rag-pattern.md](references/rag-pattern.md) for retrieval-augmented generation workflows (**tool-first**: `glob`/`rg`/`grep`/`read` before any semantic index).
 
 ## Bootstrap Mode (opt-in, inactive by default)
 
@@ -336,7 +336,7 @@ Packaging/reinstall of the skill (post-edit maneuvers) is outside this mode and 
 - Context Engineering governs the context window as a budget across CTAGV; it subsumes the RAG Pattern (one Select/Compress route) and the Isolate function of Sub-agent Orchestration
 - Tool Failure & Retry Governance composes with Context Drift Governance iteration caps, pre-edit-safety.md Failure and Rollback, and the approval pipeline in approval-briefing.md
 - Reference Verification applies at the Acquire phase of CTAGV
-- RAG Pattern extends Reference Verification with structured retrieval
+- RAG Pattern extends Reference Verification with structured, tool-first retrieval (lexical search before any semantic index)
 - Explicit Constraint feeds into Context Drift Governance's constraint files
 - Verification Hooks formalize CTAGV's Verify phase
 - Agent Evaluation extends Verification Hooks with quantitative metrics (task success rate, tool-call accuracy, steps, latency, cost, satisfaction); read [references/agent-evaluation.md](references/agent-evaluation.md) when quantifying agent performance

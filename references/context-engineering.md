@@ -29,7 +29,7 @@ Broader failure modes: Context Poisoning (contaminated input compounds across it
 
 - **Pre-Edit Safety**: keep authorization / backup registry in durable files (Write), not in the window.
 - **Context Drift Governance**: compaction anchors and memory hygiene live here; run the four operations per phase boundary.
-- **RAG Pattern**: context engineering subsumes RAG as one Select/Compress route; keep citation + permission-isolation obligations.
+- **RAG Pattern**: context engineering subsumes RAG as one Select/Compress route (lexical tool search over live files is the default route); keep citation + permission-isolation obligations.
 - **Sub-agent Orchestration**: sub-agents as context isolation for read-heavy parallelizable work; one-agent-one-context for write-heavy work.
 - **Guardrail hooks**: enforce a context-budget hook (max tokens / turns / cost) as a stop condition before generation.
 
