@@ -20,7 +20,7 @@ An **agent** is not a bare LLM call or a fixed chain: it is a system composed of
 
 Apply the Instruction Precedence and Explicit User Overrides principle below before interpreting any skill rule. Then run the mandatory instruction-integrity screen: scan the incoming user/system message for strip signals — incomplete words or sentences, invalid JSON or structurally broken payloads, missing required parameters, or parameter values far outside any valid range. If a required field is missing or its conveyed meaning is unrecoverable, enter the **Missing-Field Protocol** immediately and do not proceed to mode selection or any other protocol until the field is restored or an explicit waiver applies. Then determine which mode applies:
 
-**Mode A — Single-Agent (Default)**: If subagent spawning is unavailable or the user has explicitly forbidden it, apply the seven core protocols and six prompt patterns without orchestration. If protected source-authority resolution would require code-level comparison, halt by default and request the user's source selection or subagent availability; perform only a bounded inline comparison that an explicit scoped user direction permits.
+**Mode A — Single-Agent (Default)**: If subagent spawning is unavailable or the user has explicitly forbidden it, apply the seven core protocols and six prompt patterns without orchestration. If protected source-authority resolution would require code-level comparison, halt by default and request the user's source selection or subagent availability; perform only a bounded inline comparison that an explicit scoped user direction permits. For P0/high-stakes verification, apply the single-agent DOUBT pass (subagent-orchestration.md §5) as the Mode-A fallback to the Mode-B White/Black profiles.
 
 **Mode B — Subagent Orchestration**: If subagent spawning is available and not forbidden, run the mandatory Inter-Agent Communication capability self-check (FULL / PARTIAL / NONE; an explicit user direction forbidding spawning applies NONE directly), then apply the Subagent Orchestration Protocol alongside the core protocols. Read [references/subagent-orchestration.md](references/subagent-orchestration.md) and [references/inter-agent-communication.md](references/inter-agent-communication.md) before delegating. Delegate protected code-level source comparison even when it would otherwise appear trivial.
 
@@ -101,6 +101,20 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 
 **One-Line Sentences** — Never split a sentence across lines; keep each sentence on one line regardless of total length.
 
+**Always-On Operating Behaviors** — these operationalize Universal Principles 1-2 and 7 and the Verification Hooks pattern where they overlap; they add no permissions. Quick Ask Mode and the clarification low-effort override are the only intentional process reductions; neither waives the pre-edit gate.
+- Surface assumptions explicitly before non-trivial work and invite correction.
+- Name the specific confusion and stop rather than guess.
+- Push back with quantified downside when a direction is harmful.
+- Enforce simplicity and scope discipline: reads stay within approved scope; writes touch only authorized targets.
+- Verify with executed evidence, never "seems right".
+
+**Common Rationalizations (excuses → rebuttals)** — each row names its owning rule; details live only in the referenced sections (soft pointers, no duplicated semantics).
+| "The user didn't reply, so I proceed with the default." | Not approval — defer and halt per Clarification Channel Governance §A (clarification-protocol.md). |
+| "The task is trivial, so the gates don't apply." | Trivial/reversible asks may shrink the clarification package (low-effort override); the pre-edit gate and verification hooks still bind. |
+| "It works." (no run evidence) | Verification hooks require executed PASS/FAIL evidence in the verification execution log (context-drift-governance.md). |
+| "The intent is obvious despite the broken message." | Missing-Field Protocol: request the field plainly; never guess. |
+| "The stricter protocol must win, so this one is skipped." | No strictness shortcut — resolve by authority → polarity → scope (Conflicting Prompt Handling). |
+
 ## Protocol Details
 
 ### Universal Pre-Edit Safety Gate
@@ -129,6 +143,8 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 
 **Summary**:
 - Clarification is default-on for any non-trivial task; present all open points as one clarification package (low-effort override for trivial/reversible tasks; prompt-based waiver recorded, never inferred from silence)
+- Detect-before-ask: read the workspace, system, and config first; never ask what the files already answer; raise only the remaining points.
+- Optional interview mode (opt-in by the user, or on a second convergence round): one question at a time, each with a sensible default and a measure-and-hold ratchet, stopping when the decision tree converges; the bundled single-package default in clarification-protocol.md stays unchanged unless the user prefers otherwise.
 - Keep required decision substance invariant: options, plan insight, cascading impact, trade-offs, and a recommended default. Select the critical representation independently for each decision by its granularity and communicative fit
 - Prefer a compact diff only for a small, exact line-level code or documentation choice that passes the detailed selector gates; for broader decisions use fitting prose, `if ... then ...`, tables, flows or diagrams, contracts, schemas, or concise examples
 - When the user explicitly requests a consultant role and conditional guidance fits, use grouped `if ... then ...` recommendations with the same universal representation selector; conditional grouping is not a diff exception
@@ -165,7 +181,10 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 - Read constraint file before every task (repetitive reading is required, not redundant)
 - Explicitly show all five phases in-session with actual tool calls
 - Keep durable governance state in `.agent/state/`; keep only short-lived intermediates in the OS-specific temp directory; clean ordinary temporary files as the final hook, but retain externally depended files, registered backups, and backup location-status state
+- Maintain a standing Definition-of-Done artifact (`.agent/state/definition-of-done.md`) encoding the durable project-level bar every change clears; per-task DoD (context-drift-governance.md, Definition of Done) = standing bar + task acceptance criteria.
+- The standing bar is a floor: never weaken it to make a change pass; exceptions require an owner and an expiry, recorded in the artifact.
 - Before editing, run the Cascade-Impact Scan ([references/cascade-impact.md](references/cascade-impact.md)); present cascade changes along-way with the main proposal, per-point via Clarification Protocol, and re-enter the pre-edit gate for new targets
+- Before planning depth, run lightweight complexity routing: score 1–10 from (a) independent steps, (b) ambiguity left after clarification, (c) blast radius/irreversibility, and (d) unfamiliarity; bands: 1–3 → direct light handling with assumptions stated and one executed verification hook (Quick Ask Mode only when the request qualifies under Protocol 7), 4–6 → standard CTAGV with per-task hooks, 7–10 → written milestone plan with binary success criteria per milestone; guardrails: >7 milestones warn and >10 require explicit user approval; scores are defaults, user-overridable, and recorded in the TODO file.
 
 #### 4. QRH Generator Mode
 

@@ -336,16 +336,18 @@ Binding rules:
 For cross-verification, spawn two (or two groups of) verifier subagents with deliberately different instruction injection:
 
 - **White-Verifier** — receives full information on the original implementation intent (when available) plus explicit flaw-pattern guidance (e.g. "seek pitfalls predominant at field X"). Hunts the expected, conventional flaw range.
-- **Black-Verifier** — receives minimal or no business context: the artifact, repo scope, and output schema only. No intent, no hints, no implementation history, no prior-verifier reports; header/dependency files are omitted unless required for the artifact to be reviewable. Hunts unexpected, out-of-convention flaws and counters anchoring/confirmation bias.
+- **Black-Verifier** — receives minimal or no business context: the artifact, repo scope, and output schema only. No intent, no hints, no implementation history, no execution logs or worker output, no prior-verifier reports; header/dependency files are omitted unless required for the artifact to be reviewable. Hunts unexpected, out-of-convention flaws and counters anchoring/confirmation bias.
 
 The profiles are complementary (阴阳相生): white anchors on intent, black stays independent; the union maximizes flaw coverage.
 
 **When to use** — risk-based, not automatic: P0/high-stakes verification, security-sensitive or low-oversight AI code, and post-generation checkpoints.
 Trivial tasks (e.g. review of a dozens-of-lines script) usually need only one profile: choose white when intent-rule conformance dominates, black when author-blindness is the main risk.
 
-**Mandate rules** — every verifier mandate declares `Verification profile: white | black` (§3 Handoff Contract). White mandates include implementation intent + flaw-pattern hints; black mandates constrain Context to the artifact + repo scope + output schema. Anti-contamination: the black verifier finalizes its report before receiving the white verifier's report, hints, or session reasoning.
+**Mandate rules** — every verifier mandate declares `Verification profile: white | black` (§3 Handoff Contract). White mandates include implementation intent + flaw-pattern hints; black mandates constrain Context to the artifact + repo scope + output schema. Anti-contamination: the black verifier finalizes its report before receiving the white verifier's report, hints, or session reasoning; every finding in either profile cites evidence (file/line/command output) per reference-verification.md.
 
 **Adjudication** — both profiles' findings carry the same evidence standard ([reference-verification.md](reference-verification.md)) and equal standing; there is no automatic preference for either profile. Conflicting findings resolve through the Tie-Breaker Protocol in §7 (Emergency Procedures → Conflicting Subagent Results); its evidence-gated adoption and user-escalation rules apply unchanged. Prefer different backbones per profile where available.
+
+**Mode A fallback — single-agent DOUBT pass.** When subagents are unavailable or forbidden and the task is P0/high-stakes, run the same risk discipline inline as a fresh-context adversarial pass: CLAIM (state the decision's load-bearing claims) → EXTRACT (pull each claim's evidence) → DOUBT (attack each claim in a fresh context, without reusing the original reasoning) → RECONCILE (resolve blocking doubts, logging each resolution verbatim in session state) → STOP (zero blocking doubts, or escalate via Clarification Protocol). Cross-model escalation only with explicit user authorization.
 
 ---
 
