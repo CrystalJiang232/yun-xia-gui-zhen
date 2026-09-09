@@ -14,10 +14,12 @@ An **active self-scan** mode, complementary to the passive skill protocols. The 
 
 ## How the scan works
 
-1. Read `checks.md` — the normative checklist (19 items across workspace/authority, filesystem/permissions, runtime/tools, framework config, and channel/subagent capability).
+1. Read `checks.md` — the normative checklist (20 items across workspace/authority, filesystem/permissions, runtime/tools, framework config, and channel/subagent capability).
 2. Inspect each item read-only; record **PASS / WARN / FAIL / SKIP** with evidence.
 3. Fill a copy of `checks.md` in the host-specific temporary directory (never system config); report significant caveats in-session.
 4. Output remediation per item: what is missing, the recommended value, and how to change it. Never modify system configuration automatically.
+
+- The checklist includes an optional host-hook verification item (CHK-05-10): the scan reports presence and conformance of user-installed gate-enforcement hooks; it never installs them.
 
 ## Invariants
 

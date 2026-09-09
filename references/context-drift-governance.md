@@ -8,9 +8,11 @@
 - The CTAGV Working Loop
 - Pre-Work Setup
 - Phase-by-Phase Execution Rules
+- Per-File Work Status Checkpoint
 - Mode B Extension
+- Mode A — Iteration Caps & Termination Conditions
+- Task Plan Artifact (Complexity Bands ≥ 4)
 - Verification Hooks Pattern
-- Verification Execution Log
 - File Hygiene
 - Effort & Cost Budgeting
 - Integration with Other Protocols
@@ -199,6 +201,7 @@ After the gate passes, inject only the minimal high-signal context needed for th
 - Keep durable governance state in `.agent/state/` (see File Hygiene); keep only short-lived intermediates and code-work byproducts in the OS-temp session subdirectory, else record them in the Cleanup Registry
 - Do not pollute the workspace with temporary files
 - Show generation actions explicitly
+- Track per-file work status at checkpoint boundaries (Per-File Work Status Checkpoint below); this complements, never replaces, the TODO status field and the `next_round_proposal` block
 
 ### Phase V — Verify
 
@@ -208,6 +211,34 @@ After the gate passes, inject only the minimal high-signal context needed for th
 - Apply **Chain-of-Reasoning Trigger** for complex verification decisions
 - Apply the retry and terminal-failure transitions owned by [pre-edit-safety.md](pre-edit-safety.md)
 - Do not mark task complete unless all hooks pass
+- Checkpoint the per-file work status when Verify ends (see below) so a compacted or interrupted session resumes from recorded truth, not reconstruction
+
+## Per-File Work Status Checkpoint
+
+For multi-file tasks, maintain a lightweight per-file ledger in the durable state area so each file's work status survives compaction, interrupts, and handoffs. Scale the ledger to the task: skip it for single-file or trivial edits; use the full checkpoint discipline for multi-file or long-horizon work.
+
+**Checkpoint boundaries** (update the ledger at these points, not on every keystroke):
+
+- After each file write reaches a meaningful milestone (file edited, file verified, or file blocked)
+- At the end of Phase G or Phase V
+- On any interrupt, halt, stop, wait, or session-end, before reporting or transferring work
+
+**Ledger shape** (append to the task's state file, e.g. `.agent/state/todo.md` or a per-task work-status block):
+
+```markdown
+## Per-File Work Status - [task name]
+
+| File | Action | Status | Blocked by / Notes |
+|------|--------|--------|--------------------|
+| [path] | [edit / verify / revert] | [pending, in_progress, done, or blocked] | [blocker or verification result] |
+```
+
+**Rules**
+
+- At a checkpoint, record `Action`, `Status`, and one-line `Blocked by / Notes` per touched file; do not duplicate full diff content that belongs in verification hooks or the CAS register
+- On resume after compaction or interrupt, read the ledger first and treat it as the state of record; re-verify only boundaries claimed `done` when the task's verify hook demands it
+- When a round halts with deferred points, the ledger complements the `next_round_proposal` block in the constraints file: the proposal carries open decisions, the ledger carries per-file execution state; keep them consistent and do not restate one inside the other
+- For chunked or subagent edits, the ledger is the Mode-A analogue of the Mode B Artifact State Log (below): same staleness guard, re-hash and re-read the target file before any further write when the ledger is the only continuity record
 
 ## Mode B Extension — Swarm State & Bounded Verification
 
@@ -242,6 +273,18 @@ For Mode A (single-agent CTAGV), each task must set an explicit satisfiable term
 - **Iteration/step cap**: a hard maximum on loop iterations or steps, set through the host framework's native limit when available (e.g., a recursion/step limit, `max_turns`). Derive the ceiling from the task's declared step estimate (`ceiling = base + margin × estimated_steps`, with a global hard max) rather than a hardcoded vendor integer; coefficients are skill-level tunable defaults. Hitting the cap follows the terminal transition owned by [pre-edit-safety.md](pre-edit-safety.md).
 - **Working-set token budget**: keep the run's working set within a percentage of the model's context window (e.g., ≤ ~90%), compacting (summarizing) or trimming history when the threshold is crossed and reserving headroom for output; keep per-response `max_tokens` (a vendor parameter) conceptually separate. Percentages are tunable defaults, not authoritative.
 - **Chunked execution for large edits**: a large single-session edit/write task is split into ordered chunks rather than carried in one stretch. Between chunks, checkpoint decisions and per-file state (hash/mtime) to the state file, and re-read the target file before each chunk write — the Mode B Artifact State Log's staleness guard, applied inline. Context drift makes an un-checkpointed long edit session prone to the same stale-overwrite failure as unlogged sequential subagents — the general single-agent analogue is [edit-cas-gate.md](edit-cas-gate.md).
+
+## Task Plan Artifact (Complexity Bands ≥ 4)
+
+For a single-agent multi-step task scoring band 4 or higher, persist a plan before Phase G begins; band 1–3 tasks and Quick Ask Mode create no plan artifact.
+
+- **Location**: band 4–6 → a `### Plan` block inside the task's entry in `.agent/state/todo.md`; band 7–10 → a dedicated `.agent/state/plan-<task>.md`.
+- **Minimal schema**: Goal / Approach / Steps / Assumptions / Status; each step references its verification hook in `verification.md`, and for band 7–10 the steps are the milestones, each carrying a binary success criterion (SKILL.md complexity routing).
+- **Pre-Generate self-check**: before entering Phase G, run a 3-item inline check — (1) spec coverage: every accepted requirement maps to a step; (2) placeholder scan: no "TBD", "handle appropriately", or unnamed targets; (3) consistency: step names, artifacts, and hook references match the TODO and verification files. Fix findings inline; do not dispatch a plan-checker.
+- **Deviation**: record any deviation from the plan at the existing Per-File Work Status Checkpoint boundaries; an unrecorded deviation is a decision made in secret.
+- **Resume**: on resume after compaction or interrupt, read the plan together with the per-file ledger; the plan plus the ledger is the state of record, not recollection.
+- **Retention**: plan artifacts are durable state in `.agent/state/`; retain by default, mark `completed` or `superseded` at task end, and remove only by explicit user direction or by registering the file as cleanup-eligible under the cleanup rules of [pre-edit-safety.md](pre-edit-safety.md).
+- Keep the plan minimal and domain-neutral: it records intent, steps, and status, not diffs or narrative logs.
 
 ## Verification Hooks Pattern (Extended)
 

@@ -253,6 +253,8 @@ If write intent appears during `ready_read`, stop before the first write, set th
 
 Before a sequential chunk write, validate both the Protection Status Registry and the Artifact State Log. A mismatch, external change, stale hash, source change, or scope expansion invalidates the affected readiness and returns to Acquire/protection. Apply the general write-time CAS gate (edit-cas-gate.md) to non-chunked writes as well.
 
+**Host-level enforcement (optional, user-installed only)** — the gates above are prompt-level. A host exposing lifecycle hooks MAY externally enforce exactly two of them: the writable ready-state gate (deny a project-file write lacking a writable ready state in `protection-status.md`) and the completion verification gate (block completion lacking an executed PASS in the verification execution log). Such hooks are host-dependent, blocking-only (never write, approve, waive, classify, or modify state), and fail-open: hook absence, timeout, or failure changes no gate semantics. Verify hook presence and conformance via the opt-in bootstrap scan (`bootstrap/checks.md` CHK-05-10); the skill never installs or requires hooks.
+
 ## Failure and Rollback
 
 Classify verification and debugging failures before retrying:

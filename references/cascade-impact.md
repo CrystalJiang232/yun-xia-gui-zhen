@@ -18,6 +18,6 @@ Brief pointer hub for the cascade-change awareness semantic. Full mechanics live
 |---|---|
 | Add per-cascade-point clarification items; main-session diff presentation | [clarification-protocol.md](clarification-protocol.md) |
 | Newly proposed targets re-enter scope approval and protection | [pre-edit-safety.md](pre-edit-safety.md) |
-| CTAGV placement: run the scan between Acquire and Generate | [context-drift-governance.md](context-drift-governance.md) |
+| CTAGV placement: run the scan between Acquire and Generate | [SKILL.md](../SKILL.md) ("Before editing, run the Cascade-Impact Scan") |
 | Approval routing for accepted cascade changes | [approval-briefing.md](approval-briefing.md) |
 | Verification: each cascade artifact updated, per-point waived, or covered by a temporary protocol waiver | [context-drift-governance.md](context-drift-governance.md) |

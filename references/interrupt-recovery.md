@@ -28,7 +28,7 @@ On `halt`, `stop`, `wait`, or equivalent steering language:
 1. Stop continuing work immediately.
 2. Kill only recorded PIDs. If no PID is recorded or no match is found, report what was actually done: the spawned execution command and any known state. Leave the kill decision to the user. Do not use `pgrep` to locate processes.
 3. Close opened tools and subagents.
-4. Remove only intermediates definitely known to be agent-generated and safe to delete, such as session status files and program-run files including swap files. When unsure, do not delete.
+4. Remove only intermediates definitely known to be agent-generated and safe to delete, such as session status files and program-run files including swap files. `.agent/state/`, the protection registry, and registered backups are never intermediates and never deleted in a steering reset. When unsure, do not delete.
 5. Create a fresh status/session file and re-analyze the user prompt. Later instructions override earlier ones.
 6. Use informative reset language, for example: "I'll close previous spawned subagent and re-analyze your requirements."
 7. Do not offer apologies or regrets.

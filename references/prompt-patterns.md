@@ -4,6 +4,7 @@
 
 - [RTCF Template](#rtcf-template)
 - [Explicit Constraint](#explicit-constraint)
+- [Shared Language / Glossary Alignment](#shared-language--glossary-alignment)
 - [Chain-of-Reasoning Trigger](#chain-of-reasoning-trigger)
 - [Reflection / Self-Correction](#reflection--self-correction)
 
@@ -137,6 +138,60 @@ Key instructions and hard constraints should be placed at the prompt's start and
 - **Soft constraint enforcement**: Treating soft constraints as hard without confirmation
 - **Emphasis marker overuse**: Emphasis markers (bold, caps) must be sparse and consistent; indiscriminate use dilutes their signal. (A research-derived principle from format-sensitivity studies; no authoritative quantitative threshold exists.)
 - **One-shot constraint stuffing**: Start with a minimal prompt and add constraints incrementally; avoid stuffing templates and examples into a single up-front prompt. (Directionally confirmed guidance.)
+
+---
+
+## Shared Language / Glossary Alignment
+
+### Overview
+
+Agent and user should mean the same thing by the same word. When vocabulary drifts, prompts grow wordy, decisions misalign, and rework follows. This pattern pins high-risk terms in a compact, durable glossary so language consistency survives compaction and long sessions.
+
+**Scope note**: This pattern covers terminology alignment only. Disputes over what a constraint word permits (e.g. whether "read-only" still allows status-file writes) are scope-interpretation problems and belong to Clarification Protocol / explicit constraint scoping, not to the glossary.
+
+### When to Use
+
+- The user and the agent repeatedly restate the same concept with different words
+- A term carries project-specific or skill-specific meaning that differs from its everyday meaning ("protection" as pre-edit gate vs branch protection)
+- The same instruction has been interpreted differently in earlier rounds
+- Long-horizon or multi-session work where a definition must survive compaction
+
+### Workflow
+
+1. **Detect**: watch for terms that are ambiguous, overloaded, or re-explained more than once in a session
+2. **Pin**: add a compact entry to a durable glossary file (e.g. `.agent/state/glossary.md`); entries are one line each where possible
+3. **Use**: adopt the pinned wording in subsequent prompts, questions, and state files; when a user phrase contradicts the pinned term, flag it as a potential vocabulary mismatch before acting
+4. **Retire**: drop entries that no longer occur; keep the glossary lean so signal stays high
+
+### Glossary Entry Shape
+
+```markdown
+| Term | Definition (one line) | Usage example |
+|------|----------------------|---------------|
+| [term] | [meaning pinned for this project/session] | [one example of correct usage] |
+```
+
+### Example (skill vocabulary)
+
+| Term | Pinned meaning in this skill |
+|------|-----------------------------|
+| `protection` | The pre-edit safety gate state in `protection-status.md` (`ready_git`, `ready_backed_up`, etc.), not Git branch protection |
+| `ready_read` | Read-only review of one approved source; writes prohibited |
+| `next_round_proposal` | The UNEXECUTED deferred-points block in the constraints file; distinct from per-file work status |
+| `RAG` | Grounding generation in retrieved context (tool-first lexical search), not a vector database |
+
+### Integration
+
+- Feeds Phase A (Acquire) of CTAGV: the glossary is minimal high-signal context to inject when present
+- Complements Explicit Constraint: constraints state what is allowed; the glossary states what terms mean
+- Complements RTCF Context: a pinned term removes the need for repeated context restatement
+
+### Anti-Patterns
+
+- **Glossary bloat**: documenting every word instead of only high-risk, overloaded, or repeatedly-misunderstood terms
+- **Thesaurus mode**: collecting synonyms without pinning which one the session uses
+- **Scope leakage**: treating constraint-boundary disputes as vocabulary problems and "fixing" them with a definition
+- **Silent drift**: noticing a conflicting usage and proceeding without flagging the mismatch
 
 ---
 

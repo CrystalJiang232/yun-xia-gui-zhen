@@ -8,7 +8,7 @@ description: >
 
 > Core philosophy: *Defer to clarify. Verify to trust. Structure to persist.*
 
-This skill governs agent behavior through seven core protocols, one conditional protocol, and six prompt engineering patterns. Apply them based on task characteristics.
+This skill governs agent behavior through seven core protocols, one conditional protocol, and seven prompt engineering patterns. Apply them based on task characteristics.
 
 ## Agent Model (design philosophy)
 
@@ -20,19 +20,21 @@ An **agent** is not a bare LLM call or a fixed chain: it is a system composed of
 
 Apply the Instruction Precedence and Explicit User Overrides principle below before interpreting any skill rule. Then run the mandatory instruction-integrity screen: scan the incoming user/system message for strip signals — incomplete words or sentences, invalid JSON or structurally broken payloads, missing required parameters, or parameter values far outside any valid range. If a required field is missing or its conveyed meaning is unrecoverable, enter the **Missing-Field Protocol** immediately and do not proceed to mode selection or any other protocol until the field is restored or an explicit waiver applies. Then determine which mode applies:
 
-**Mode A — Single-Agent (Default)**: If subagent spawning is unavailable or the user has explicitly forbidden it, apply the seven core protocols and six prompt patterns without orchestration. If protected source-authority resolution would require code-level comparison, halt by default and request the user's source selection or subagent availability; perform only a bounded inline comparison that an explicit scoped user direction permits. For P0/high-stakes verification, apply the single-agent DOUBT pass (subagent-orchestration.md §5) as the Mode-A fallback to the Mode-B White/Black profiles.
+**Mode A — Single-Agent (Default)**: If subagent spawning is unavailable or the user has explicitly forbidden it, apply the seven core protocols and seven prompt patterns without orchestration. If protected source-authority resolution would require code-level comparison, halt by default and request the user's source selection or subagent availability; perform only a bounded inline comparison that an explicit scoped user direction permits. For P0/high-stakes verification, apply the single-agent DOUBT pass (subagent-orchestration.md §5) as the Mode-A fallback to the Mode-B White/Black profiles.
 
 **Mode B — Subagent Orchestration**: If subagent spawning is available and not forbidden, run the mandatory Inter-Agent Communication capability self-check (FULL / PARTIAL / NONE; an explicit user direction forbidding spawning applies NONE directly), then apply the Subagent Orchestration Protocol alongside the core protocols. Read [references/subagent-orchestration.md](references/subagent-orchestration.md) and [references/inter-agent-communication.md](references/inter-agent-communication.md) before delegating. Delegate protected code-level source comparison even when it would otherwise appear trivial.
 
-**Context budget & load order** — Level 1: frontmatter only. Level 2: this entry point, mode selection, and Protocol Selection Matrix. Level 3: load exactly one reference file required by the active protocol or mode; for files over ~100 lines, use its TOC or `rg` to read only the required section, then return here. In Mode A, skip `subagent-orchestration.md` and `inter-agent-communication.md`. In Mode B, load those two before delegating. Do not recursively chase cross-references unless the referenced rule is active.
+**Context budget & load order** — Level 1: frontmatter only. Level 2: this entry point, mode selection, and Protocol Selection Matrix. Level 3: load exactly one reference file required by the active protocol or mode; for files over ~100 lines, use its TOC or `rg` to read only the required section, then return here. In Mode A, skip `subagent-orchestration.md` and `inter-agent-communication.md` unless an active rule requires them (e.g., the Mode-A DOUBT fallback at subagent-orchestration.md §5). In Mode B, load those two before delegating. Do not recursively chase cross-references unless the referenced rule is active. Complexity band 1–3 tasks run the Protocol Floor plus the inline light-handling route (one executed verification hook, assumptions stated) without full CTAGV; load context-drift-governance.md only for the state-field and verification-log formats, and treat the matrix rows for non-trivial/multi-step tasks as satisfied by that minimal load.
 
 **Interrupt recovery (mandatory at any interrupt)**: before reasoning about active status, read [references/interrupt-recovery.md](references/interrupt-recovery.md), re-establish session and workspace status, and resolve any steering or rejection signal.
 
 This check is mandatory at skill load time. Do not proceed with protocol selection until the mode is determined.
 
-**Channel check (also mandatory at load time)**: determine whether the host exposes an interactive clarification/approval channel — e.g. a tool named `ask_user` or any similarly purposed tool/hook under another name — and record `CHANNEL: available|absent|unknown` in the constraints file. Universal Principle 8 applies regardless of the result.
+**Protocol Floor (always-on)** — These bind on every task, with no trigger needed: instruction precedence and explicit user overrides (Universal Principles), the strip-signal screen (Skill Entry Point), executed evidence before claims (Always-On Operating Behaviors), the load-time mandatories (mode determination, channel check, state initialization), interrupt recovery at any interrupt, and the pre-edit gate before any project-file edit. Everything else activates by Selection Matrix trigger or complexity band; a task that triggers nothing still runs its band's required verification hook (complexity routing below).
 
-**State initialization (mandatory at task start/load)**: create the minimal governance state required by Context Drift Governance and record channel, constraints, task, and verification fields. Source-authority and protection fields may remain explicitly unresolved during this initialization.
+**Channel check (also mandatory at load time)**: determine whether the host exposes an interactive clarification/approval channel — e.g. a tool named `ask_user` or any similarly purposed tool/hook under another name — and record `CHANNEL: available|absent|unknown` in the constraints file. Universal Principle 8 applies regardless of the result. Quick Ask deferral follows the state-initialization rule below.
+
+**State initialization (mandatory at task start/load)**: create the minimal governance state required by Context Drift Governance and record channel, constraints, task, and verification fields. Source-authority and protection fields may remain explicitly unresolved during this initialization. Under Quick Ask Mode this step is deferred while the mode lasts; it is mandatory before any task that writes files or persists state, and a deferred channel-check result is recorded as soon as state initialization runs.
 
 **Pre-edit check (mandatory before implementation work and every project-file edit)**: read [references/pre-edit-safety.md](references/pre-edit-safety.md), resolve one authoritative source, obtain required edit approval, and complete its repository-protection gate. Before those gates pass, limit task-artifact access to bounded authority discovery or protected candidate comparison; do not begin implementation-oriented reads or any project write.
 
@@ -89,8 +91,6 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 
 4c. **Interrupt Recovery (mandatory)** — On any interrupt, do not assume the reason; re-read session history and inspect workspace status before reasoning. Later steering or rejection messages override earlier instructions. Follow [references/interrupt-recovery.md](references/interrupt-recovery.md).
 
-9. **Quick Ask Mode** — On a narrow elaboration, explanation, quick-answer, or post-work report request that passes the mandatory semantic check, do not edit workspace files, do not spawn subagents, and answer from main-session context only. Prefer no status-file writes. If the answer is uncertain, state the caveat; if unavailable, ask permission for external search. Prefer normal-task interpretation when the request is ambiguous between research and quick ask.
-
 5. **File-Based State** — Session memory is unreliable. A file of several hundred bytes is worth a context window of a trillion tokens. Persist state (constraints, TODOs, verification hooks) to files. Durable state lives in the repository working directory under `.agent/state/`; the agent writes it by default and the user confirms.
 
 6. **RTCF Structuring** — Before engaging with any task, internally decompose the user's intent through the RTCF lens: Role (who), Task (what), Context (background), Format (output expectation). Even when not explicitly outputting the RTCF structure, use it to ensure completeness of understanding.
@@ -99,6 +99,8 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 
 8. **Clarification Channel Discipline** — Treat an empty, system-default, or timeout response as deferred, never approved. Halt the round, persist decisions and an unexecuted next-round proposal, and await the user. Do not ask how to perform forbidden or unpermitted work. Follow the user's explicit channel preference within the precedence rule above. Read [references/clarification-protocol.md](references/clarification-protocol.md), "Clarification Channel Governance."
 
+9. **Quick Ask Mode** — On a narrow elaboration, explanation, quick-answer, or post-work report request that passes the mandatory semantic check, do not edit workspace files, do not spawn subagents, and answer from main-session context only. Prefer no status-file writes. If the answer is uncertain, state the caveat; if unavailable, ask permission for external search. Prefer normal-task interpretation when the request is ambiguous between research and quick ask.
+
 **One-Line Sentences** — Never split a sentence across lines; keep each sentence on one line regardless of total length.
 
 **Always-On Operating Behaviors** — these operationalize Universal Principles 1-2 and 7 and the Verification Hooks pattern where they overlap; they add no permissions. Quick Ask Mode and the clarification low-effort override are the only intentional process reductions; neither waives the pre-edit gate.
@@ -106,14 +108,29 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 - Name the specific confusion and stop rather than guess.
 - Push back with quantified downside when a direction is harmful.
 - Enforce simplicity and scope discipline: reads stay within approved scope; writes touch only authorized targets.
-- Verify with executed evidence, never "seems right".
+- Verify with executed evidence, never "seems right": a PASS claim requires the verification command executed in the current Verify phase with its output shown; evidence from an earlier phase, a previous session, or a run planned for later does not support a completion claim, and informal completion sentiment ("should work", "looks done") is not evidence.
+
+**Spirit and letter are one rule** — violating the letter of a gate to serve its spirit is a violation; an exception exists only where the rule itself states one on an observable condition.
 
 **Common Rationalizations (excuses → rebuttals)** — each row names its owning rule; details live only in the referenced sections (soft pointers, no duplicated semantics).
+| Rationalization | Rebuttal |
+|---|---|
 | "The user didn't reply, so I proceed with the default." | Not approval — defer and halt per Clarification Channel Governance §A (clarification-protocol.md). |
 | "The task is trivial, so the gates don't apply." | Trivial/reversible asks may shrink the clarification package (low-effort override); the pre-edit gate and verification hooks still bind. |
-| "It works." (no run evidence) | Verification hooks require executed PASS/FAIL evidence in the verification execution log (context-drift-governance.md). |
+| "It works." (no run evidence) | Verification hooks require executed PASS/FAIL evidence in the verification execution log (context-drift-governance.md); stale, remembered, or planned runs do not count. |
 | "The intent is obvious despite the broken message." | Missing-Field Protocol: request the field plainly; never guess. |
 | "The stricter protocol must win, so this one is skipped." | No strictness shortcut — resolve by authority → polarity → scope (Conflicting Prompt Handling). |
+
+**Red Flags — stop and re-enter the owning protocol when you catch yourself thinking**:
+- "The gate is satisfied in spirit." (spirit-vs-letter rule above)
+- "This edit is too small for the pre-edit gate." (Universal Pre-Edit Safety Gate)
+- "The verification obviously passes; no need to run it." (Verification Hooks / evidence freshness)
+- "The user would approve this, so I can proceed." (Clarification Channel Governance §A — silence is never approval)
+- "I read this file earlier; no re-read needed." (Write-time CAS guard)
+- "Marking complete now and verifying afterward is equivalent." (Phase V — no completion without passing hooks)
+A caught red-flag thought is a trigger, not a verdict: stop, name the owning protocol, and re-enter it; if the thought matches a row in Common Rationalizations, apply its rebuttal.
+
+**Maintaining this table**: when a session surfaces a rationalization not listed here, propose it as a new row with its owning rule and rebuttal; add or edit rows only with explicit user approval.
 
 ## Protocol Details
 
@@ -125,13 +142,13 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 
 **Summary**:
 - Resolve exactly one source of truth before repository detection: accept one exact absolute user-selected path; otherwise report the chosen path or every candidate and await the required approval
-- Mark rejected copies as non-authoritative after selection; delegate code-level candidate comparison in Mode B and halt by default in Mode A unless an explicit scoped user direction permits bounded comparison
+- Mark rejected copies as non-authoritative after selection; delegate code-level candidate comparison in Mode B and halt by default in Mode A unless an explicit scoped user direction permits bounded comparison; task context, sole-candidate status, naming, location, or the agent's own comparison never constitutes source approval
 - After authority resolves, classify Git state: defer on unstaged, untracked, or unmerged changes unless the user explicitly directs work on that state; staged-only changes do not trigger that deferral
 - For non-Git work or an accepted dirty Git state, create and register a pre-edit backup unless the user explicitly directs `work with no backup`; record that waiver's scope
 - Retain registered backups and their location-status file after ordinary cleanup; always report retained backup locations on success or failure
 - Treat an intentional `terminates session` directive as authority to clean only exact backups registered by the active session; preserve and update the location-status file
 - On an unrecoverable failure, halt and report recovery information; do not automatically roll back
-- **Write-time CAS guard**: before each new edit group, re-hash any file this session already wrote; mismatch ⇒ re-read (whole file < 100 KB, targeted section otherwise; escalate for core files) before editing. Prefer scoped Edit over Write; global substitution only after a full re-read. An edit-tool failure for a non-system reason ⇒ suspected race ⇒ overhaul-read before the next write; never silently overwrite or auto-merge. Details: [references/edit-cas-gate.md](references/edit-cas-gate.md)
+- **Write-time CAS guard**: before each new edit group, re-hash any file this session already wrote; mismatch ⇒ re-read (whole file < 100 KB, targeted section otherwise; escalate for core files) before editing. Prefer scoped Edit over Write; global substitution only after a full re-read. An edit-tool failure for a non-system reason ⇒ suspected race ⇒ overhaul-read before the next write; never silently overwrite or auto-merge. A mismatch, unreadable file, or content-failure voids the old content: never edit, merge, or "keep the good parts" from memory — the re-read is the only new baseline. Details: [references/edit-cas-gate.md](references/edit-cas-gate.md)
 
 ### Core Protocols
 
@@ -184,7 +201,7 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 - Maintain a standing Definition-of-Done artifact (`.agent/state/definition-of-done.md`) encoding the durable project-level bar every change clears; per-task DoD (context-drift-governance.md, Definition of Done) = standing bar + task acceptance criteria.
 - The standing bar is a floor: never weaken it to make a change pass; exceptions require an owner and an expiry, recorded in the artifact.
 - Before editing, run the Cascade-Impact Scan ([references/cascade-impact.md](references/cascade-impact.md)); present cascade changes along-way with the main proposal, per-point via Clarification Protocol, and re-enter the pre-edit gate for new targets
-- Before planning depth, run lightweight complexity routing: score 1–10 from (a) independent steps, (b) ambiguity left after clarification, (c) blast radius/irreversibility, and (d) unfamiliarity; bands: 1–3 → direct light handling with assumptions stated and one executed verification hook (Quick Ask Mode only when the request qualifies under Protocol 7), 4–6 → standard CTAGV with per-task hooks, 7–10 → written milestone plan with binary success criteria per milestone; guardrails: >7 milestones warn and >10 require explicit user approval; scores are defaults, user-overridable, and recorded in the TODO file.
+- Before planning depth, run lightweight complexity routing: score 1–10 from (a) independent steps, (b) ambiguity left after clarification, (c) blast radius/irreversibility, and (d) unfamiliarity; bands: 1–3 → direct light handling with assumptions stated and one executed verification hook (Quick Ask Mode only when the request qualifies under Protocol 7), 4–6 → standard CTAGV with per-task hooks, 7–10 → written milestone plan with binary success criteria per milestone; bands ≥4 persist a Task Plan Artifact (context-drift-governance.md): band 4–6 as a `### Plan` block in `.agent/state/todo.md`, band 7–10 as `.agent/state/plan-<task>.md`; guardrails: >7 milestones warn and >10 require explicit user approval; scores are defaults, user-overridable, and recorded in the TODO file.
 
 #### 4. QRH Generator Mode
 
@@ -237,7 +254,7 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 - Prefer no status-file writes.
 - Keep reasoning compact and scoped to the exact question.
 - If uncertain, state the caveat; if unavailable, request permission for external search.
-- If ambiguous, give a compact option-style clarification.
+- If the answer content is ambiguous, give a compact option-style clarification; if the mode selection itself is ambiguous (research vs quick ask), prefer normal-task interpretation (Universal Principles).
 
 #### 7a. Tool Failure & Retry Governance (Agent-Level)
 
@@ -301,26 +318,18 @@ Apply these patterns to enhance prompt quality and response reliability:
 | **Chain-of-Reasoning Trigger** |   Force step-by-step reasoning before conclusion    |     Complex decisions, trade-off analysis, debugging      |
 | **Reflection / Self-Correction** |   Generate → critique → revise to catch errors     | Outputs with checkable criteria; before marking complete  |
 |        **RAG Pattern**         |   Ground generation in retrieved external context (grep/glob-first; no index default)   | Technical recommendations, factual claims, best practices |
+|  **Writing for Agents**        |  Author compact AI-facing docs (AGENTS.md/SKILL.md): specific, verifiable, progressive disclosure |  Creating or editing agent-facing instruction files |
 |     **Verification Hooks**     |   Embed checkpoints to self-verify output quality   | Before marking any task complete; in multi-step workflows |
 
-**Details**: Read [references/prompt-patterns.md](references/prompt-patterns.md) for RTCF, Explicit Constraint, Chain-of-Reasoning Trigger, and Reflection / Self-Correction.
+**Details**: Read [references/prompt-patterns.md](references/prompt-patterns.md) for RTCF, Explicit Constraint, Shared Language / Glossary Alignment, Chain-of-Reasoning Trigger, and Reflection / Self-Correction.
 
 **RAG Pattern**: Read [references/rag-pattern.md](references/rag-pattern.md) for retrieval-augmented generation workflows (**tool-first**: `glob`/`rg`/`grep`/`read` before any semantic index).
 
+**Writing for Agents**: Read [references/writing-for-agents.md](references/writing-for-agents.md) when creating or editing AGENTS.md / CLAUDE.md / SKILL.md-style always-on instruction files.
+
 ## Bootstrap Mode (opt-in, inactive by default)
 
-Bootstrap is an **active self-scan** mode, distinct from the passive protocol triggers above. It is disabled by default: no bootstrap files are loaded at skill load, and the passive trigger surface is unchanged.
-
-**Activation**: the user must explicitly invoke it by saying "check the current configuration status" or an equivalent description (e.g., "bootstrap scan", "system self-check", "setup check", "run the configuration scan"). Do not enter Bootstrap Mode otherwise.
-
-**When invoked**, the agent:
-
-- Reads `bootstrap/README.md` (entry contract) and `bootstrap/checks.md` (normative checklist).
-- Runs the scan read-only, recording PASS / WARN / FAIL / SKIP with evidence, and fills a copy of `checks.md` in the host-specific temporary directory.
-- Reports to the user which items are not properly set up, with recommended values and the approach to modify them; never modifies system configuration automatically.
-- Applies the invariants in `bootstrap/README.md`: read-only, secrets presence-only, no skill self-checks, no network checks.
-
-Packaging/reinstall of the skill (post-edit maneuvers) is outside this mode and requires explicit user direction.
+Bootstrap is an active self-scan mode, disabled by default; do not enter it otherwise. Activation requires an explicit user invocation (e.g., "check the current configuration status"). Normative contract and invariants: [bootstrap/README.md](bootstrap/README.md); normative checklist: [bootstrap/checks.md](bootstrap/checks.md). Packaging/reinstall is outside this mode and requires explicit user direction.
 
 ## Integration Notes
 

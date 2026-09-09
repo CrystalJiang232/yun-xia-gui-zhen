@@ -159,6 +159,16 @@ Status: ACTIVE (2026-08-18). Approved checklist; companion to `README.md` in thi
 - Record: PASS / WARN + evidence.
 - Remediation: update in-skill instructions to remove any test/no-op request conventions.
 
+### CHK-05-10 — Optional gate-enforcement hooks (user-installed only)
+
+- Applicability: only when the host exposes lifecycle hooks (e.g., PreToolUse/Stop-style); otherwise SKIP with reason. This check verifies and reports; the skill never installs, requires, or modifies hooks.
+- Inspect: whether user-installed hooks externally enforce either of the two permitted mappings: (1) PreToolUse-style deny on a project-file write whose `.agent/state/protection-status.md` gate state is not a writable ready state (`ready_git` / `ready_backed_up` / `ready_no_backup`); (2) Stop/TaskCompleted-style block on completion lacking an executed PASS in the verification execution log (context-drift-governance.md).
+- Expected: absent (hooks are optional) or matching the two mappings exactly; a conforming hook only blocks and reports — it never writes, approves, waives, classifies, or modifies state — and its denial names the missing gate state.
+- Recommended: absent, or both mappings present and conforming; any other hook behavior is non-conforming.
+- Severity: P1.
+- Record: PASS (absent, or present and conforming) / WARN (present but out-of-mapping, overbroad, or state-modifying) / SKIP (host without lifecycle hooks) + evidence.
+- Remediation: describe the correct mapping per host docs for the user to install or fix; never auto-install or self-grant. Hook absence, timeout, or failure changes no gate semantics — the prompt-level gates remain the sole enforcement.
+
 ---
 
 ## Area 07 — Channel / subagent capability
@@ -179,7 +189,7 @@ Status: ACTIVE (2026-08-18). Approved checklist; companion to `README.md` in thi
 
 - Applicability: always.
 - Inspect: subagent spawning availability for mode routing (Mode A vs Mode B).
-- Output: a generic capability statement (subagents available / partial / unavailable). Informational item.
+- Output: a generic capability statement (FULL / PARTIAL / NONE). Informational item.
 - Label: PASS when subagents are available; WARN only when subagent spawning is unavailable; never FAIL.
 - Severity: P1.
 - Record: PASS / WARN + evidence.

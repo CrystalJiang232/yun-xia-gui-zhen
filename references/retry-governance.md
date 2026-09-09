@@ -76,5 +76,5 @@ Notes:
 ## System-Level Reinforcement
 
 - Prompt-level retry discipline degrades over long contexts; prefer host-framework system-level settings
-- Generate a framework-specific tuning guide by feeding the attachment prompt (agent-framework-retry-tuning-prompt.md in the user home directory) to the agent
+- Generate a framework-specific tuning guide by feeding the attachment prompt (agent-framework-retry-tuning-prompt.md in the user home directory) to the agent; if the file is absent, apply the retry discipline inline without the attachment prompt
 - At minimum configure: model-call retry cap, tool-execution retry cap, loop or turn limit, rate-limit backoff, and permission hooks

@@ -4,6 +4,7 @@
 
 - Overview
 - When to Activate
+- Defaults and Overrides
 - Clarification Loop
 - Required Decision Substance
 - Representation Selection
@@ -11,7 +12,6 @@
 - Clarification Channel Governance
 - Mid-Work Barrier Detection
 - State Management
-- Pending Clarifications
 - Subagent Inspector
 
 ## Overview

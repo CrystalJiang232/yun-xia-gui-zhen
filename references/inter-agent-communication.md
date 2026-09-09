@@ -66,7 +66,7 @@ Apply advisory file locks for every shared target: create the lock atomically wi
 
 ## Timeouts, Retries, and Termination
 
-Set a per-message timeout before any ask; a blocking ask returns on reply or timeout. Bound retries to the refinement budget in subagent-orchestration.md §8 and never loop autonomously. Reuse the terminal status codes in §5 of subagent-orchestration.md, and decide escalation modes (never, on-failure, always) before any fan-out.
+Set a per-message timeout before any ask; a blocking ask returns on reply or timeout. Bound retries to the refinement budget in subagent-orchestration.md §8 and never loop autonomously. Reuse the terminal status codes in §5 Pattern F of subagent-orchestration.md, and decide escalation modes (never, on-failure, always) before any fan-out.
 
 ## Security Boundaries
 

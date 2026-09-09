@@ -5,8 +5,6 @@
 - Overview
 - When to Activate
 - The RAG Workflow
-- Retrieved Context
-- Synthesis
 - RAG vs. Reference Verification
 - Failure Modes and Handling
 - Anti-Patterns
@@ -24,6 +22,10 @@ RAG grounds AI-generated content in externally retrieved information rather than
 **Routing note**: When all relevant corpus fits in the context window, direct long-context injection can outperform retrieval (arXiv 2407.16833, 9 datasets). Retrieval remains required for dynamic or fast-evolving data and for audit or permission-control needs. Route per situation, not as a universal default: the MEANS may be live tools, trivial lexical search, full-corpus injection, or a semantic index, with the choice stated. Rows marked **Required** below keep their verification obligation regardless of the means.
 
 **Recency-first routing**: for fast-moving or highly time-sensitive topics, route the query to real-time tools/APIs (function calling, live connectors, live search) rather than a static index. Keep the index fresh via incremental indexing on update streams (refresh only changed documents, not a full rebuild), and cache frequently queried results with a TTL plus active invalidation on source update; expose freshness so staleness is observable, not assumed.
+
+**Qualitative validity tiers (freshness check)**: before relying on a retrieved source, assess its age against the volatility of the claim it supports. Use qualitative tiers rather than invented precision: fast-moving claims (library versions, recent API behavior, current best practice) must be re-verified or dated when older than their evident change cadence; slow-moving claims (definitions, standards prose, stable architecture guidance) do not need age-based re-verification unless the source itself changed. Record `Retrieved` at acquisition; when a source is stale for its claim class, downgrade it or re-retrieve instead of silently using it. Tier windows are qualitative; treat any numeric cutoff (such as the 2-year recency preference elsewhere) as a tunable default, not an authoritative threshold.
+
+**Worked examples (this skill's own corpus)**: the RAG pattern text is fast-moving — model context-window guidance and search-tool claims shift quickly, so a retrieved statement about them older than its evident cadence gets a date qualifier or re-verification. Reference Verification Protocol's authority hierarchy (workspace > system > web) is slow-moving — its wording does not require age-based re-verification. Pre-edit safety's gate states are definitional — re-check them only when the file changes, not on a time basis.
 
 **Trivial-first default (files and workspace)**: For file corpora — source code, docs, configs, the workspace — retrieval starts with the simplest exact tools: `glob`/`find` for names and paths, `rg`/`grep` for content patterns, then `read` on candidates. Follow references (imports, includes, symbol definitions) and refine the query before escalating. Agentic grep/glob retrieval reaches RAG-level fidelity for most code-search scenarios without any vector store (arXiv 2602.23368); treat a standing semantic index as the exception.
 
@@ -97,7 +99,7 @@ Execute searches and collect candidate sources. Apply the source hierarchy from 
 
 1. **Primary sources first**: Official docs, source code, RFCs
 2. **Cross-reference**: Find 2+ independent sources confirming the same claim
-3. **Recency filter**: Prefer sources within the last 2 years
+3. **Recency filter**: Prefer sources within the last 2 years for fast-moving tech (tunable default; apply the qualitative validity tiers above by claim volatility)
 4. **Diversity**: Mix documentation, tutorials, and source code references
 
 **Permission isolation at the data layer**: enforce access control at retrieval time, not by prompt-level prohibition alone. Attach ACL/permission metadata (identity/role/department/permission groups) to documents/chunks/embeddings, and inject the authenticated principal's entitlements as filter conditions into retrieval queries (never from user-supplied text). Unauthorized content must never enter the model context.

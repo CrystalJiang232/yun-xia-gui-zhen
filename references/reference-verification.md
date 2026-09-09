@@ -54,7 +54,7 @@ Subagents inherit the same rule and may run web search only when the parent mand
 | Source count | Minimum 2 independent sources per perspective |
 | Source quality | Official docs, reputable technical blogs, academic papers, source code |
 | Cross-reference | Sources must independently confirm the same claim |
-| Recency | Prefer sources dated within last 2 years for fast-moving tech |
+| Recency | Prefer sources dated within last 2 years for fast-moving tech (tunable default; tier by claim volatility per the qualitative validity tiers in rag-pattern.md) |
 | Attribution | Every claim must have a visitable link attached |
 
 ### Source Hierarchy
