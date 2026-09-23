@@ -30,9 +30,9 @@ Apply the Instruction Precedence and Explicit User Overrides principle below bef
 
 This check is mandatory at skill load time. Do not proceed with protocol selection until the mode is determined.
 
-**Protocol Floor (always-on)** — These bind on every task, with no trigger needed: instruction precedence and explicit user overrides (Universal Principles), the strip-signal screen (Skill Entry Point), executed evidence before claims (Always-On Operating Behaviors), the load-time mandatories (mode determination, channel check, state initialization), interrupt recovery at any interrupt, and the pre-edit gate before any project-file edit. Everything else activates by Selection Matrix trigger or complexity band; a task that triggers nothing still runs its band's required verification hook (complexity routing below).
+**Protocol Floor (always-on)** — These bind on every task, with no trigger needed: instruction precedence and explicit user overrides (Universal Principles), the strip-signal screen (Skill Entry Point), clarification decision ownership (DO-1…DO-3) so no complexity band can self-close a clarification item, executed evidence before claims (Always-On Operating Behaviors), the load-time mandatories (mode determination, channel check, state initialization), interrupt recovery at any interrupt, and the pre-edit gate before any project-file edit. Everything else activates by Selection Matrix trigger or complexity band; a task that triggers nothing still runs its band's required verification hook (complexity routing below).
 
-**Channel check (also mandatory at load time)**: determine whether the host exposes an interactive clarification/approval channel — e.g. a tool named `ask_user` or any similarly purposed tool/hook under another name — and record `CHANNEL: available|absent|unknown` in the constraints file. Universal Principle 8 applies regardless of the result. Quick Ask deferral follows the state-initialization rule below.
+**Channel check (also mandatory at load time)**: determine whether the host exposes an interactive clarification/approval channel — e.g. a tool named `ask_user` or any similarly purposed tool/hook under another name — and record `CHANNEL: available|absent|unknown` in the constraints file, plus `CHANNEL_SUBAGENT: available|absent|unknown` for subagent scope. Never design a subagent mandate that requires an interaction the recorded scope cannot provide; a subagent that needs a user decision returns `NEEDS_CONTEXT`/`BLOCKED` for the main session to channel. Universal Principle 8 applies regardless of the result. Quick Ask deferral follows the state-initialization rule below.
 
 **State initialization (mandatory at task start/load)**: create the minimal governance state required by Context Drift Governance and record channel, constraints, task, and verification fields. Source-authority and protection fields may remain explicitly unresolved during this initialization. Under Quick Ask Mode this step is deferred while the mode lasts; it is mandatory before any task that writes files or persists state, and a deferred channel-check result is recorded as soon as state initialization runs.
 
@@ -50,6 +50,7 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 |            Multi-step complex task (3+ actions)             |  **Context Drift Governance**  |  Clarification Protocol  |
 |   Long-horizon / multi-step / tool-using or retrieval-heavy |       **Context Engineering**  |  Context Drift Governance  |
 |                Starting ANY non-trivial task                |  **Context Drift Governance**  |  Apply others as needed  |
+| Bare imperative naming a deliverable but not its acceptance criteria | **Clarification Protocol** (DO-3) | Context Drift Governance |
 |              Any interrupt or halt/stop/wait steering       | **Interrupt Recovery Protocol** |  Clarification Protocol  |
 |    User asks to elaborate/explain or requests quick answer  |         **Quick Ask Mode**      |     Clarification Protocol |
 |          User provides skill/creator instructions           |     **QRH Generator Mode**     |      All protocols       |
@@ -101,6 +102,8 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 
 9. **Quick Ask Mode** — On a narrow elaboration, explanation, quick-answer, or post-work report request that passes the mandatory semantic check, do not edit workspace files, do not spawn subagents, and answer from main-session context only. Prefer no status-file writes. If the answer is uncertain, state the caveat; if unavailable, ask permission for external search. Prefer normal-task interpretation when the request is ambiguous between research and quick ask.
 
+**Clarification Decision Ownership (always on)** — A clarification item closes only on a user reply that is type-conforming to the item's question form and unambiguous about which option or default it selects; any other reply defers per Clarification Channel Governance §A, and the agent's own recommendation never closes an item. Rule names: DO-1 commitment test, DO-2 deferral set, DO-2a default-identity guard, DO-2b procedural permission resolves nothing, DO-2c bounded escalation (terminal, disclosed), DO-3 specification completeness and the non-trivial test. The normative text — including the reserved phrase table, the item-state enum, and the required state-record fields — lives only in [references/clarification-protocol.md](references/clarification-protocol.md) §D/§E/§F; do not restate the literals here.
+
 **One-Line Sentences** — Never split a sentence across lines; keep each sentence on one line regardless of total length.
 
 **Always-On Operating Behaviors** — these operationalize Universal Principles 1-2 and 7 and the Verification Hooks pattern where they overlap; they add no permissions. Quick Ask Mode and the clarification low-effort override are the only intentional process reductions; neither waives the pre-edit gate.
@@ -120,6 +123,10 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 | "It works." (no run evidence) | Verification hooks require executed PASS/FAIL evidence in the verification execution log (context-drift-governance.md); stale, remembered, or planned runs do not count. |
 | "The intent is obvious despite the broken message." | Missing-Field Protocol: request the field plainly; never guess. |
 | "The stricter protocol must win, so this one is skipped." | No strictness shortcut — resolve by authority → polarity → scope (Conflicting Prompt Handling). |
+| "The user said 'no preference'/'either way', so any option is fine." | Non-committal replies resolve nothing — the item stays pending (DO-2). |
+| "The returned answer matches my recommended default, so the user agreed." | Value-equality is not consent, and a host defect can auto-select the first option; explicit ratification is required (DO-2a). |
+| "The user said 'just proceed', so I can apply my defaults." | Procedural permission authorizes execution and resolves no item (DO-2b). |
+| "The request was short and confident, so it is complete." | Fluency is not specification; state the supplied vs inferred fields first (DO-3). |
 
 **Red Flags — stop and re-enter the owning protocol when you catch yourself thinking**:
 - "The gate is satisfied in spirit." (spirit-vs-letter rule above)
@@ -128,6 +135,8 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 - "The user would approve this, so I can proceed." (Clarification Channel Governance §A — silence is never approval)
 - "I read this file earlier; no re-read needed." (Write-time CAS guard)
 - "Marking complete now and verifying afterward is equivalent." (Phase V — no completion without passing hooks)
+- "The user will obviously pick my default." (DO-2a — identity is not consent)
+- "This request is clear enough that questions would be wasteful." (DO-3 — state the supplied vs inferred fields first)
 A caught red-flag thought is a trigger, not a verdict: stop, name the owning protocol, and re-enter it; if the thought matches a row in Common Rationalizations, apply its rebuttal.
 
 **Maintaining this table**: when a session surfaces a rationalization not listed here, propose it as a new row with its owning rule and rebuttal; add or edit rows only with explicit user approval.
@@ -159,17 +168,17 @@ A caught red-flag thought is a trigger, not a verdict: stop, name the owning pro
 **Process**: Read [references/clarification-protocol.md](references/clarification-protocol.md)
 
 **Summary**:
-- Clarification is default-on for any non-trivial task; present all open points as one clarification package (low-effort override for trivial/reversible tasks; prompt-based waiver recorded, never inferred from silence)
+- Clarification is default-on for any non-trivial task; present all open points as one clarification package (low-effort override for trivial/reversible tasks; prompt-based waiver recorded, never inferred from silence); "non-trivial" is defined by DO-3a's test, and an item closes only per DO-1
 - Detect-before-ask: read the workspace, system, and config first; never ask what the files already answer; raise only the remaining points.
 - Optional interview mode (opt-in by the user, or on a second convergence round): one question at a time, each with a sensible default and a measure-and-hold ratchet, stopping when the decision tree converges; the bundled single-package default in clarification-protocol.md stays unchanged unless the user prefers otherwise.
 - Keep required decision substance invariant: options, plan insight, cascading impact, trade-offs, and a recommended default. Select the critical representation independently for each decision by its granularity and communicative fit
 - Prefer a compact diff only for a small, exact line-level code or documentation choice that passes the detailed selector gates; for broader decisions use fitting prose, `if ... then ...`, tables, flows or diagrams, contracts, schemas, or concise examples
 - When the user explicitly requests a consultant role and conditional guidance fits, use grouped `if ... then ...` recommendations with the same universal representation selector; conditional grouping is not a diff exception
-- Defer all work until user explicitly permits or all points are resolved
+- Defer all work until user explicitly permits or all points are resolved — a procedural "proceed" satisfies the first clause only and resolves no item (DO-2b)
 - If mid-work barriers emerge, pause and re-enter clarification
 - No code generation without explicit permission terms ("permitted"/"cleared"/"generate")
-- Maintain pending-clarification state in-file and reference it in every output until resolved
-- Channel rules (binding even when clarification is waived): empty/system-default channel response ⇒ defer + halt the round + persist state; no channel questions about forbidden/unpermitted edits; user channel preference overrides defaults (see clarification-protocol.md, Clarification Channel Governance)
+- Maintain pending-clarification state in-file and reference it in every output until resolved; each item records `question_form` and `default_offered` before raising, and `identity_check`/`ratification` after (DO-1, DO-2a)
+- Channel rules (binding even when clarification is waived): empty/system-default/timeout, non-committal, unaddressed, and default-identical-without-ratification responses ⇒ defer + halt the round + persist state; no channel questions about forbidden/unpermitted edits; user channel preference overrides defaults (see clarification-protocol.md, Clarification Channel Governance §A and Decision Ownership §D/§E)
 
 #### 2. Reference Verification
 
@@ -201,7 +210,7 @@ A caught red-flag thought is a trigger, not a verdict: stop, name the owning pro
 - Maintain a standing Definition-of-Done artifact (`.agent/state/definition-of-done.md`) encoding the durable project-level bar every change clears; per-task DoD (context-drift-governance.md, Definition of Done) = standing bar + task acceptance criteria.
 - The standing bar is a floor: never weaken it to make a change pass; exceptions require an owner and an expiry, recorded in the artifact.
 - Before editing, run the Cascade-Impact Scan ([references/cascade-impact.md](references/cascade-impact.md)); present cascade changes along-way with the main proposal, per-point via Clarification Protocol, and re-enter the pre-edit gate for new targets
-- Before planning depth, run lightweight complexity routing: score 1–10 from (a) independent steps, (b) ambiguity left after clarification, (c) blast radius/irreversibility, and (d) unfamiliarity; bands: 1–3 → direct light handling with assumptions stated and one executed verification hook (Quick Ask Mode only when the request qualifies under Protocol 7), 4–6 → standard CTAGV with per-task hooks, 7–10 → written milestone plan with binary success criteria per milestone; bands ≥4 persist a Task Plan Artifact (context-drift-governance.md): band 4–6 as a `### Plan` block in `.agent/state/todo.md`, band 7–10 as `.agent/state/plan-<task>.md`; guardrails: >7 milestones warn and >10 require explicit user approval; scores are defaults, user-overridable, and recorded in the TODO file.
+- Before planning depth, run lightweight complexity routing: score 1–10 from (a) independent steps, (b) ambiguity left after clarification, (c) blast radius/irreversibility, and (d) unfamiliarity; bands: 1–3 → direct light handling with assumptions stated and one executed verification hook (Quick Ask Mode only when the request qualifies under Protocol 7), 4–6 → standard CTAGV with per-task hooks, 7–10 → written milestone plan with binary success criteria per milestone; bands 1–3 still bind DO-1…DO-3, and the light route may shrink the package but never the ownership of a decision; bands ≥4 persist a Task Plan Artifact (context-drift-governance.md): band 4–6 as a `### Plan` block in `.agent/state/todo.md`, band 7–10 as `.agent/state/plan-<task>.md`; guardrails: >7 milestones warn and >10 require explicit user approval; scores are defaults, user-overridable, and recorded in the TODO file.
 
 #### 4. QRH Generator Mode
 

@@ -97,7 +97,7 @@ Comprehensive task list with full detail:
 
 ### Channel & Deferred-State Fields
 
-The constraints file additionally carries `CHANNEL: available|absent|unknown` (set at skill load, per SKILL.md entry point) and `CHANNEL_PREFERENCE: default|prefer-ask|no-ask` (updated whenever the user expresses one). When a round is halted per Clarification Channel Governance §A (clarification-protocol.md), append a `next_round_proposal` block to the constraints file:
+The constraints file additionally carries `CHANNEL: available|absent|unknown` (set at skill load, per SKILL.md entry point), `CHANNEL_SUBAGENT: available|absent|unknown` (whether the channel is reachable from a subagent scope), and `CHANNEL_PREFERENCE: default|prefer-ask|no-ask` (updated whenever the user expresses one). When a round is halted per Clarification Channel Governance §A (clarification-protocol.md), append a `next_round_proposal` block to the constraints file:
 
 ```markdown
 ## Next-Round Proposal (UNEXECUTED)
