@@ -6,6 +6,7 @@ Single-file owner of approval-request briefing and approval-fatigue governance. 
 
 - Purpose
 - M1 — Approval Briefing Rules
+- M1.1 — Prerequisite/Mutation Separation (two-sided)
 - Few-Shot Anchoring
 - M2 — Approval Volume & Attention Governance
 - Emission Discipline
@@ -25,7 +26,7 @@ Every user-facing approval request MUST contain all of the following:
 2. **Intended action** — one sentence stating what the agent is about to do.
 3. **Named targets** — every target path, URL, or argument with a variable name and its role; no magic strings.
 4. **Risk tier** — none / low / medium / high / destructive, plus a one-line consequence statement.
-5. **Exact command** — multi-line with one logical step per line; never an opaque one-liner; line breaks at `&&` and `|`; every argument visible.
+5. **Exact command** — multi-line with one logical step per line; never an opaque one-liner; line breaks at `&&` and `|`; every argument visible. Line breaks are formatting only: a read-only prerequisite is never conjoined with the mutating command in the first place (M1.1).
 6. **Options** — Approve / Deny for normal requests; for high-risk requests, the required confirmation phrase (see M2.2); never pre-select Approve; risky actions require a deliberate non-default answer.
 
 Variable naming convention: declare `TARGET_DIR`, `TARGET_FILE`, or `CONFIG_*` variables at the top of the command; reference variables instead of literals; use lowercase for unexported variables; mask secrets (tokens, keys, passwords) in previews.
@@ -60,6 +61,23 @@ TARGET_FILE="${TARGET_DIR}/<name>"
 Reply exactly (no arguments, no other words): approved to <base_command>
 Any other reply, empty, or timeout = Deny. The command will NOT be executed otherwise.
 ```
+
+### M1.1 — Prerequisite/Mutation Separation (two-sided, equal precedence)
+
+Two clauses of **equal precedence** — apply both; neither is a caveat to the other. They decide where an approval boundary is, and where it is not.
+
+**M1.1a — Split when needed.** A read-only or reversible prerequisite — a backup copy, `sha256sum`/hashing, `ls`/`cat`/`echo` inspection, `git status`, or any other non-mutating step — MUST NOT be joined to a mutating command by a shell control operator (`&&`, `||`, `;`, `|`) or a subshell/command-substitution boundary.
+
+- Run the prerequisite as its own step, as its own command, before the mutation.
+- If the host gates that step, brief it on its own with risk tier none/low; if the host suppresses it (the usual case), it produces no dialog and the mutation stands alone as the single approval.
+- Line-breaking at `&&` (rule 5) formats an operator chain; it does not create an approval boundary and does not satisfy this clause.
+- The escalation trigger must be attributable to one visible command: the reviewer approves the safe step alone and the mutation alone, never a bundle.
+
+**M1.1b — Never over-split.** Separation applies only to read-only prerequisites; it never inflates the approval count.
+
+- Never raise an approval request for a read-only or no-op step (Emission Discipline): the host suppresses those, and a fabricated request erodes the approval signal.
+- Two or more mutating steps that must land together are an atomic mutation group (M2.3): they stay in ONE approval request and are never split.
+- Prefer the fewest real approval requests that keep each mutation individually attributable; every extra prompt spends review attention on a routine action (M2).
 
 ## Few-Shot Anchoring — Good vs Bad Commands
 
@@ -117,7 +135,25 @@ cd "${PROJECT_DIR}"
 pytest "${PROJECT_DIR}/tests" -k integration
 ```
 
-Contrast notes: literal paths repeated across a line and across commands make typos and copy-paste drift invisible; opaque one-liners hide arguments and intermediate commands between operators; the good side's variables make each target's role visible and reviewable, matching the named-targets rule.
+Pair 4 — backup, then mutate (split the read-only prerequisite from the mutation, per M1.1):
+
+BAD (safe prerequisite welded to the mutation by `&&`):
+
+```bash
+cp "${SKILL_FILE}" "${BK_DIR}/" && unzip -oq "${SKILL_FILE}" -d "${SKILL_DIR}"
+```
+
+GOOD (the prerequisite is its own command; the mutation is the single approval):
+
+```bash
+# step 1 — prerequisite (read-only, its own command; usually host-suppressed)
+cp "${SKILL_FILE}" "${BK_DIR}/"
+
+# step 2 — the single approval-gated mutation
+unzip -oq "${SKILL_FILE}" -d "${SKILL_DIR}"
+```
+
+Contrast notes: literal paths repeated across a line and across commands make typos and copy-paste drift invisible; opaque one-liners hide arguments and intermediate commands between operators; the good side's variables make each target's role visible and reviewable, matching the named-targets rule. Pair 4 adds the M1.1 split: a read-only prerequisite never rides along inside the mutation's approval command.
 
 ## M2 — Approval Volume & Attention Governance
 
