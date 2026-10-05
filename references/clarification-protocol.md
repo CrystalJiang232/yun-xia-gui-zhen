@@ -6,6 +6,7 @@
 - When to Activate
 - Defaults and Overrides
 - Clarification Loop
+- Step-Split Guidance (soft)
 - Required Decision Substance
 - Representation Selection
 - Consultant If-Then Variant
@@ -74,6 +75,24 @@ This phase does not apply to a field governed by the Missing-Field Protocol (mis
 
 - **State-persistence item (exact line)**: "Write durable state to `<working-dir>/.agent/state/` (enabled by default); confirm / correct." Include it whenever `.agent/state/` does not yet exist or is being (re)initialized.
 - **State-reconcile item**: only when existing state is stale / inexplicable / inconsistent with the current project status — offer overwrite-from-scratch, amend-on-top, or leave (move / absent); see context-drift-governance.md, File Hygiene.
+
+### Step-Split Guidance (soft)
+
+A **soft, task-shape recommendation** appended to the clarification package for a non-trivial task. It is guidance, not a gate: it never blocks generation, never overrides Phase 4's permission gate, and is skipped under Quick Ask Mode or a recorded waiver. The agent judges whether the task is complication-coupled; a non-trivial task carries only a **weight** toward splitting.
+
+**Prefer a split when any one holds:**
+
+- **Repetitive / template breadth** — one transformation, format, or template recurs across many units (chapters, sections, files, records), so a wrong first instance would recur across all of them.
+- **Chain-like cascade** — a change propagates along a dependency chain to multiple dependents ("one change, many places"), so the transitive closure of affected call sites or tests is large.
+- **Irreversible / coexistence (optional)** — a backward-incompatible interface change, or a change touching released/protected artifacts, where old and new must coexist mid-change (expand → migrate → contract).
+
+**Defer by default (limited change) when all hold:** limited editing (small, single-file, or few-line); minimal dependency (a simple leaf helper with limited callers is exempt); and a non-chain workflow with confident consistency (for example, deterministic packaging).
+
+**Offer-even-when-deferred.** Even when the agent internally defers, still offer the split in the clarification output as an alternative, with a brief overhead note — for example: "This looks small and self-contained; I would normally do it in one pass, but I can split it into phases, with per-step analysis and confirmation overhead, if you prefer."
+
+**How to offer.** Present one recommended split (alternatives only where a genuine choice exists) plus the explicit alternatives **all-in-one (no split)** and **custom**, and let the user choose. The per-step substance and the break rule are owned by [context-drift-governance.md](context-drift-governance.md), "Break-After-Each-Step".
+
+**Discretion.** There is no reserved "YOLO" keyword: whether a situation is YOLO-like is the agent's discretion, and it waives the step-split guidance only — never the pre-edit gate, the channel rules, or executed evidence.
 
 ### Required Decision Substance
 

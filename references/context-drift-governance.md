@@ -12,6 +12,7 @@
 - Mode B Extension
 - Mode A — Iteration Caps & Termination Conditions
 - Task Plan Artifact (Complexity Bands ≥ 4)
+- Break-After-Each-Step (Soft Step-Split)
 - Verification Hooks Pattern
 - File Hygiene
 - Effort & Cost Budgeting
@@ -285,6 +286,15 @@ For a single-agent multi-step task scoring band 4 or higher, persist a plan befo
 - **Resume**: on resume after compaction or interrupt, read the plan together with the per-file ledger; the plan plus the ledger is the state of record, not recollection.
 - **Retention**: plan artifacts are durable state in `.agent/state/`; retain by default, mark `completed` or `superseded` at task end, and remove only by explicit user direction or by registering the file as cleanup-eligible under the cleanup rules of [pre-edit-safety.md](pre-edit-safety.md).
 - Keep the plan minimal and domain-neutral: it records intent, steps, and status, not diffs or narrative logs.
+
+## Break-After-Each-Step (Soft Step-Split)
+
+The workflow-control half of the soft step-split guidance owned by [clarification-protocol.md](clarification-protocol.md), "Step-Split Guidance (soft)". It applies only when a split has been chosen or recommended; it is a preference, never a hard gate, and it never overrides the pre-edit gate or the Phase 4 permission gate.
+
+- **Hand-authored per-step result.** For each step, deliberately author the intermediate *result* — the per-step deliverable or intermediate artifact state — not merely the action. That per-step result is what makes a step independently confirmable, and it may differ from both the initial state and the target state (for an interface change this is the expand → migrate → contract shape).
+- **Break after each step.** After a step, stop and confirm its result — a compile plus a simple workflow/logic check, or another executed check — before starting the next step. On a failed check, apply the bounded retry in Tool Failure & Retry Governance, then halt and report; do not silently continue.
+- **Bar scoping vs the Definition of Done.** The standing DoD floor binds at task end (and at any declared release point). An intermediate step is judged by its declared per-step result, not by the final bar; record the per-step result and its check in the Task Plan Artifact and the per-file ledger. A split is not a licence to ship a broken end state: the final step returns the artifact to the standing bar.
+- **Measured, not enforced.** Prefer a split on repetitive/template breadth or chain-like cascade; defer it for a limited change; and still offer the split when internally deferred (see clarification-protocol.md, "Step-Split Guidance (soft)").
 
 ## Verification Hooks Pattern (Extended)
 

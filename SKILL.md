@@ -48,6 +48,7 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 |   Instruction stripped/truncated or a required field missing | **Missing-Field Protocol**     | Clarification Protocol (after field restored) |
 |   External facts, technical claims, or references needed    |   **Reference Verification**   |  Clarification Protocol  |
 |            Multi-step complex task (3+ actions)             |  **Context Drift Governance**  |  Clarification Protocol  |
+| Large-scale / repetitive or chain-coupled change (split preference) | **Clarification Protocol** (step-split guidance) | Context Drift Governance |
 |   Long-horizon / multi-step / tool-using or retrieval-heavy |       **Context Engineering**  |  Context Drift Governance  |
 |                Starting ANY non-trivial task                |  **Context Drift Governance**  |  Apply others as needed  |
 | Bare imperative naming a deliverable but not its acceptance criteria | **Clarification Protocol** (DO-3) | Context Drift Governance |
@@ -179,6 +180,7 @@ A caught red-flag thought is a trigger, not a verdict: stop, name the owning pro
 - No code generation without explicit permission terms ("permitted"/"cleared"/"generate")
 - Maintain pending-clarification state in-file and reference it in every output until resolved; each item records `question_form` and `default_offered` before raising, and `identity_check`/`ratification` after (DO-1, DO-2a)
 - Channel rules (binding even when clarification is waived): empty/system-default/timeout, non-committal, unaddressed, and default-identical-without-ratification responses ⇒ defer + halt the round + persist state; no channel questions about forbidden/unpermitted edits; user channel preference overrides defaults (see clarification-protocol.md, Clarification Channel Governance §A and Decision Ownership §D/§E)
+- The package may carry a **soft step-split guidance field**: for a complication-coupled task, prefer a step-by-step split (offer one recommended split, all-in-one, or custom), with hand-authored per-step results and break-after-each-step; even when internally deferred, still offer it. Details: [references/clarification-protocol.md](references/clarification-protocol.md) and [references/context-drift-governance.md](references/context-drift-governance.md)
 
 #### 2. Reference Verification
 
@@ -211,6 +213,7 @@ A caught red-flag thought is a trigger, not a verdict: stop, name the owning pro
 - The standing bar is a floor: never weaken it to make a change pass; exceptions require an owner and an expiry, recorded in the artifact.
 - Before editing, run the Cascade-Impact Scan ([references/cascade-impact.md](references/cascade-impact.md)); present cascade changes along-way with the main proposal, per-point via Clarification Protocol, and re-enter the pre-edit gate for new targets
 - Before planning depth, run lightweight complexity routing: score 1–10 from (a) independent steps, (b) ambiguity left after clarification, (c) blast radius/irreversibility, and (d) unfamiliarity; bands: 1–3 → direct light handling with assumptions stated and one executed verification hook (Quick Ask Mode only when the request qualifies under Protocol 7), 4–6 → standard CTAGV with per-task hooks, 7–10 → written milestone plan with binary success criteria per milestone; bands 1–3 still bind DO-1…DO-3, and the light route may shrink the package but never the ownership of a decision; bands ≥4 persist a Task Plan Artifact (context-drift-governance.md): band 4–6 as a `### Plan` block in `.agent/state/todo.md`, band 7–10 as `.agent/state/plan-<task>.md`; guardrails: >7 milestones warn and >10 require explicit user approval; scores are defaults, user-overridable, and recorded in the TODO file.
+- When a step split is used, break after each step — confirm the step's hand-authored result with an executed check — and scope the standing DoD floor to task end while each intermediate step carries its own declared bar (context-drift-governance.md, Break-After-Each-Step).
 
 #### 4. QRH Generator Mode
 
