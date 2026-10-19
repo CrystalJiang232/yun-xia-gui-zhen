@@ -8,6 +8,7 @@
 - Clarification Loop
 - Step-Split Guidance (soft)
 - Required Decision Substance
+- Choice Cues (compact reference sketch)
 - Representation Selection
 - Consultant If-Then Variant
 - Clarification Channel Governance
@@ -132,6 +133,17 @@ These are representation-invariant semantic requirements. Section labels may be 
 **Permission status:** [clarification/recommendation only / generation permitted /
 target-specific edit approval and scope]
 ```
+
+### Choice Cues (compact reference sketch)
+
+Use these cues only when they reduce the effort of comparing options. They supplement, and never replace, the required decision substance, recommendation, or explicit ratification rule.
+
+- **Outcome labels.** For two or three options, add one balanced sentence of the form: `Choose A if you need <outcome>; choose B if you need <different outcome>.` For more options, give each option one `Choose this if:` line. Do not create a false binary or give only the preferred option a plausible condition.
+- **Dimension table.** When multiple separately judged requirements materially change the choice, use a compact table with options as rows and decision dimensions as columns. As a soft preference, keep both counts between two and five; exceed either limit when the actual context requires it, but keep every added row or column decision-relevant. Use short values such as `low`, `high`, `yes`, `no`, or `unknown`, and state the best fit in one line. Do not add scores unless the user supplies weights.
+- **Open question and fine-tuning.** This cue is optional. When one or more unresolved points could materially refine the recommendation, include one or more `Open question:` items; multiple items are allowed but should be rare. Phrase each question to connect it to the named options and explain what would change; invite a fuller response in which the user can confirm or amend conditions, priorities, constraints, scope, or option details rather than only answering yes or no. For example: `Open question: If <priority> matters more than <trade-off>, <option> fits better; is that the right balance, or would you change either condition?` Omit this cue for a simple decision, and do not treat its absence as missing information.
+- **Optional extension.** If a useful follow-up lies outside the current choice, append `Optional extension: <bounded addition> (not part of the current scope unless requested).` Do not state it as an assumed requirement.
+
+Use the lightest form that exposes the difference: an outcome-label sentence for a binary choice, a dimension table for a multi-criterion choice, and plain prose when a cue would add no information.
 
 ### Representation Selection
 
