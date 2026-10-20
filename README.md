@@ -39,18 +39,20 @@ Three habits carry most of the skill:
 - **Clarification channel governance: silence is never approval.** Decision-ownership semantics (`DO-1`…`DO-3`) make a default-identical answer still pending and procedural permission resolve nothing.
 - **A tool-failure taxonomy.** Transient and throttling failures retry with backoff; deterministic failures halt and report; three consecutive failures stop the loop.
 - **Reference verification as policy.** Web search is deny-by-default; the hierarchy is workspace files > system-scope files > web, with two independent sources per retained claim.
+- **Archive evidence is opt-in.** Archived state is disregarded by default and cannot support a current claim until the user authorizes a scoped lookup and live evidence verifies it.
 - **Interrupt recovery, context-budget governance, and delegation governed rather than merely executed.**
 - **Mode discipline — knowing when NOT to run the machinery.** Quick Ask answers narrow questions without touching the workspace; Bootstrap Mode is an opt-in, read-only self-scan.
 
 ## What's inside
 
-- **`SKILL.md`** (370 lines) — the entry point: mode selection, a 20-situation protocol-selection matrix, seven core protocols (`1`–`7`), two lettered siblings (`7a` Tool Failure & Retry Governance, `7b` Context Engineering), one conditional orchestration protocol (`8`), and seven prompt-engineering patterns.
-- **`references/`** — 18 protocol files, loaded on demand by the active situation.
+- **`SKILL.md`** (390 lines) — the entry point: mode selection, a 22-situation protocol-selection matrix, seven core protocols (`1`–`7`), two lettered siblings (`7a` Tool Failure & Retry Governance, `7b` Context Engineering), one conditional orchestration protocol (`8`), and seven prompt-engineering patterns.
+- **`references/`** — 19 protocol files, loaded on demand by the active situation.
 - **`bootstrap/`** — an opt-in, read-only configuration self-scan with 20 checks.
+- **`scripts/state_archive.py`** — a standard-library utility for read-only state metrics, archival review inventory, and guarded archive preparation.
 
 ## How to use
 
-Copy the folder into a skill directory the host loads — for Codex, `~/.codex/skills/yun-xia-gui-zhen`, carrying `SKILL.md`, `bootstrap/` and `references/` — or read `SKILL.md` directly. It is documentation-sized by design: it changes agent behaviour through loaded instructions, not a runtime library.
+Copy the folder into a skill directory the host loads — for Codex, `~/.codex/skills/yun-xia-gui-zhen`, carrying `SKILL.md`, `bootstrap/`, `references/`, and `scripts/` — or read `SKILL.md` directly. Governance remains instruction-driven; the utility is an optional standard-library helper for state inspection and guarded archive preparation.
 
 ## Honest limits
 
@@ -60,7 +62,7 @@ Copy the folder into a skill directory the host loads — for Codex, `~/.codex/s
 
 ## Status
 
-`SKILL.md` 370 lines · 18 references · 20 bootstrap checks.
+`SKILL.md` 390 lines · 19 references · 20 bootstrap checks · standard-library state-archive helper.
 
 ## License
 

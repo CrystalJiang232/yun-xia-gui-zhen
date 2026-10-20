@@ -54,7 +54,7 @@ All five phases and every applicable protection transition must use actual tool 
 
 Before task work or implementation reads, create the four minimal state files below. Populate source approval and protection fields through metadata-only preflight before reading implementation contents or writing task artifacts.
 
-**State location (durable)**: Keep these governance state files in the repository working directory under `.agent/state/` (e.g. `constraints.md`, `todo.md`, `verification.md`, `protection-status.md`). State-file writes are **enabled by default**; the agent writes them and the user confirms/corrects. Surface this write behavior as part of the clarification package, and proactively ask the user for durable TODO / status / decision entries. Use the OS-temp directory only for short-lived intermediates (e.g. non-git-edit backups, code-work byproducts).
+**State location (durable)**: Keep current governance state in `.agent/state/` (for example `constraints.md`, `todo.md`, `verification.md`, `protection-status.md`). State-file writes are **enabled by default**; the agent writes them and the user confirms/corrects. Promote reviewed, reusable facts to `.agent/memory/` and retain reviewed session evidence under `.agent/archive/`. Use the OS-temp directory only for short-lived intermediates. The completion, review, archival, and retention lifecycle is owned by [state-archive.md](state-archive.md).
 
 ### 1. Constraints File (`.agent/state/constraints.md`)
 
@@ -84,6 +84,7 @@ Comprehensive task list with full detail:
 
 ## Task 1: [Title]
 **Status**: pending | in_progress | blocked | incomplete | halted | completed
+**archive_status**: active | pending_review | held | reviewed
 **Dependencies**: none | Task X
 
 ### Details
@@ -164,6 +165,7 @@ Give the session state files a **contract shape** to prevent state explosion and
 - Define **update rules** per field (append vs last-value-wins) so concurrent or repeated updates merge predictably instead of clobbering or exploding state.
 - Treat the schema as a **validation boundary**: a missing or unexpected field fails fast rather than drifting silently.
 - Keep stored state minimal by design; add a field only when a phase genuinely consumes it.
+- Keep historical evidence out of the hot schema after close-out review; use [state-archive.md](state-archive.md) for the archive manifest and retention contract.
 
 ## Phase-by-Phase Execution Rules
 
@@ -336,23 +338,24 @@ A verification hook must be:
 
 ## File Hygiene
 
-- Put durable governance state in the repository working directory under `.agent/state/` by default (agent writes; user confirms); keep only short-lived intermediates in the active-session temporary location, and register their provenance and status.
+- Put current governance state in `.agent/state/` by default (agent writes; user confirms); keep durable reusable knowledge in `.agent/memory/` and reviewed history in `.agent/archive/` under [state-archive.md](state-archive.md).
 - Apply cleanup, backup retention, termination directives, and status preservation only as specified by [pre-edit-safety.md](pre-edit-safety.md); do not introduce a second cleanup algorithm here.
 - **Workspace**: Only final deliverables in the workspace
-- **No pollution**: Durable state lives only in `.agent/state/` (explicit override of the "no project-dir writes" default); never write other intermediate state to the project directory.
+- **No pollution**: Durable governance artifacts live only under `.agent/` (the explicit override of the "no project-dir writes" default); never write other intermediate state to the project directory.
 
 **Memory hygiene (lifecycle rules for stored state):**
 
 - **Short-term vs long-term**: keep short-term (thread-scoped) memory trimmed; promote only durable, structured facts to long-term storage.
 - **Summarize, don't retain verbatim**: when history approaches the working-set budget, replace older turns with a running summary (compaction); keep the summary plus recent raw turns.
 - **Clip/trim**: drop or edit old turns including tool results; trim to the token budget before each call.
-- **TTL/expiry**: apply a time- or size-based expiry to stored fragments and tool results so stored state cannot grow without bound.
+- **Archive instead of hoarding**: move reviewed historical evidence out of the hot working set under [state-archive.md](state-archive.md).
+- **Retention review**: use the archive lifecycle's soft threshold and retain-by-default rule; deletion remains governed by [pre-edit-safety.md](pre-edit-safety.md).
 - These rules are tunable per model/context; mark thresholds as defaults, not authoritative.
 
 **Reconcile stale state (required on state load):**
 
 - Validate each state file on load: does it exist; is it fresh (last-updated marker); does its version/schema match; is it consistent with the current project status?
-- If a file is inexplicable, stale, or inconsistent with current reality, DO NOT act on it silently. Escalate a single **state-reconcile decision item** in the clarification package.
+- If a file is inexplicable, stale, or inconsistent with current reality, DO NOT act on it silently. Apply the eligibility and migration rules in [state-archive.md](state-archive.md). Omitted external paths do not block archival when the record is otherwise historical.
 - Offer: (a) **overwrite from scratch** — drop all stale items (default when the state is clearly unreliable, schema-incompatible, or the diff is large); (b) **amend on top** — keep and fix the small diff (default when mostly valid); (c) **leave it** — archive or move the file elsewhere, or omit it (default when ambiguous).
 - Before overwriting or amending, back up the existing file (see pre-edit-safety.md backup rules).
 

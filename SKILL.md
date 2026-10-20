@@ -1,7 +1,7 @@
 ---
 name: yun-xia-gui-zhen
 description: >
-  Quick Reference Handbook (QRH) for AI agent prompt engineering governance. Provides structured protocols to ensure high-quality, reliable agent behavior across tasks. Use when starting ANY non-trivial task, when facing ambiguous requirements, when external verification is needed, when structuring prompts for complex tasks, when maintaining session consistency, or when governing workspace/source authority and pre-edit Git or backup safety. Triggers on: software development, analysis, multi-step workflows, research, prompt or skill engineering, ambiguous requirements, stripped or truncated instructions or missing required fields, backup-control directions, tool-failure retry governance, retry-loop prevention, and an intentional `terminates session` request to clean registered session backups. Apply this skill to clarify before execution, preserve visible state, verify claims and outputs, and orchestrate subagents where applicable.
+  Quick Reference Handbook (QRH) for AI agent prompt engineering governance. Provides structured protocols to ensure high-quality, reliable agent behavior across tasks. Use when starting ANY non-trivial task, when facing ambiguous requirements, when external verification is needed, when structuring prompts for complex tasks, when maintaining session consistency, when completed state needs archival review, or when governing workspace/source authority and pre-edit Git or backup safety. Triggers on: software development, analysis, multi-step workflows, research, prompt or skill engineering, ambiguous requirements, stripped or truncated instructions or missing required fields, backup-control directions, state-file bloat or archival review, tool-failure retry governance, retry-loop prevention, and an intentional `terminates session` request to clean registered session backups. Apply this skill to clarify before execution, preserve visible state, verify claims and outputs, and orchestrate subagents where applicable.
 ---
 
 # 云霞归真 — QRH Governance Handbook
@@ -48,6 +48,7 @@ This check is mandatory at skill load time. Do not proceed with protocol selecti
 |   Instruction stripped/truncated or a required field missing | **Missing-Field Protocol**     | Clarification Protocol (after field restored) |
 |   External facts, technical claims, or references needed    |   **Reference Verification**   |  Clarification Protocol  |
 |            Multi-step complex task (3+ actions)             |  **Context Drift Governance**  |  Clarification Protocol  |
+| Completed task or hot state awaiting archival review       | **State Archive Lifecycle**    |  Context Drift Governance |
 | Large-scale / repetitive or chain-coupled change (split preference) | **Clarification Protocol** (step-split guidance) | Context Drift Governance |
 |   Long-horizon / multi-step / tool-using or retrieval-heavy |       **Context Engineering**  |  Context Drift Governance  |
 |                Starting ANY non-trivial task                |  **Context Drift Governance**  |  Apply others as needed  |
@@ -93,7 +94,7 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 
 4c. **Interrupt Recovery (mandatory)** — On any interrupt, do not assume the reason; re-read session history and inspect workspace status before reasoning. Later steering or rejection messages override earlier instructions. Follow [references/interrupt-recovery.md](references/interrupt-recovery.md).
 
-5. **File-Based State** — Session memory is unreliable. A file of several hundred bytes is worth a context window of a trillion tokens. Persist state (constraints, TODOs, verification hooks) to files. Durable state lives in the repository working directory under `.agent/state/`; the agent writes it by default and the user confirms.
+5. **File-Based State** — Session memory is unreliable. A file of several hundred bytes is worth a context window of a trillion tokens. Persist current constraints, tasks, decisions, and verification hooks under `.agent/state/`; promote durable knowledge to `.agent/memory/`; archive reviewed session evidence under `.agent/archive/`. Disregard archived state files by default: never search, read, index, glob, or cite `.agent/archive/` unless the user explicitly authorizes an archive lookup for the current task. If a lookup appears necessary, ask for that permission first; task need, prior familiarity, or discovery of the archive path is not permission. Treat authorized results as historical evidence and verify any present-state claim against current `.agent/state/` plus live files or repository evidence. A completed task stays in hot state until its close-out review and explicit user confirmation. Details: [references/state-archive.md](references/state-archive.md).
 
 6. **RTCF Structuring** — Before engaging with any task, internally decompose the user's intent through the RTCF lens: Role (who), Task (what), Context (background), Format (output expectation). Even when not explicitly outputting the RTCF structure, use it to ensure completeness of understanding.
 
@@ -209,11 +210,27 @@ A caught red-flag thought is a trigger, not a verdict: stop, name the owning pro
 - Read constraint file before every task (repetitive reading is required, not redundant)
 - Explicitly show all five phases in-session with actual tool calls
 - Keep durable governance state in `.agent/state/`; keep only short-lived intermediates in the OS-specific temp directory; clean ordinary temporary files as the final hook, but retain externally depended files, registered backups, and backup location-status state
+- Keep `.agent/state/` as current truth only; completed-but-unreviewed work remains visible as `archive_status: pending_review`, and reviewed history moves to `.agent/archive/` under [references/state-archive.md](references/state-archive.md)
 - Maintain a standing Definition-of-Done artifact (`.agent/state/definition-of-done.md`) encoding the durable project-level bar every change clears; per-task DoD (context-drift-governance.md, Definition of Done) = standing bar + task acceptance criteria.
 - The standing bar is a floor: never weaken it to make a change pass; exceptions require an owner and an expiry, recorded in the artifact.
 - Before editing, run the Cascade-Impact Scan ([references/cascade-impact.md](references/cascade-impact.md)); present cascade changes along-way with the main proposal, per-point via Clarification Protocol, and re-enter the pre-edit gate for new targets
 - Before planning depth, run lightweight complexity routing: score 1–10 from (a) independent steps, (b) ambiguity left after clarification, (c) blast radius/irreversibility, and (d) unfamiliarity; bands: 1–3 → direct light handling with assumptions stated and one executed verification hook (Quick Ask Mode only when the request qualifies under Protocol 7), 4–6 → standard CTAGV with per-task hooks, 7–10 → written milestone plan with binary success criteria per milestone; bands 1–3 still bind DO-1…DO-3, and the light route may shrink the package but never the ownership of a decision; bands ≥4 persist a Task Plan Artifact (context-drift-governance.md): band 4–6 as a `### Plan` block in `.agent/state/todo.md`, band 7–10 as `.agent/state/plan-<task>.md`; guardrails: >7 milestones warn and >10 require explicit user approval; scores are defaults, user-overridable, and recorded in the TODO file.
 - When a step split is used, break after each step — confirm the step's hand-authored result with an executed check — and scope the standing DoD floor to task end while each intermediate step carries its own declared bar (context-drift-governance.md, Break-After-Each-Step).
+
+#### 3a. State Archive Lifecycle (context-hygiene companion)
+
+**When**: A task reaches `work_status=completed`, a new session finds completed-but-unarchived tasks, an archive operation is requested, the archive soft threshold is reached, or existing state needs migration.
+
+**Process**: Read [references/state-archive.md](references/state-archive.md).
+
+**Summary**:
+- Keep active truth small; separate `work_status=completed` from `archive_status=pending_review`.
+- At completion, recommend a close-out review and archive only after explicit user confirmation.
+- In a new session, emit at most one batched hint for completed tasks awaiting archival review.
+- Keep only current work and workflow-critical exceptions; archive superseded histories, obsolete external paths, and non-critical session-local records after snapshotting.
+- Use the 2,000-line or 256-KiB archive soft threshold, whichever is first; below it, emit no retention hint.
+- Retain archives by default; a threshold hint is review-only, never deletion authority.
+- Use `scripts/state_archive.py` for read-only status, inventory, task checks, and dry-run migration planning.
 
 #### 4. QRH Generator Mode
 

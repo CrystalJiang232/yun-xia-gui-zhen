@@ -270,6 +270,10 @@ Never automatically restore, revert, reset, delete agent changes, or otherwise r
 
 Normal cleanup operates only on exact paths registered by the active session as cleanup-eligible. Never infer cleanup targets from directory scans, globs, naming patterns, another session's registry, or general statements about temporary files.
 
+Archived session evidence is retained by default. Archival eligibility, external-reference handling, and the soft retention threshold are owned by [state-archive.md](state-archive.md); moving or deleting an archive still requires this section's source, protection, exact-target, and explicit-user-approval rules.
+
+After an operation ends, historical backup references may be archived even when their temporary paths no longer exist. This does not waive the backup requirement for an active write.
+
 Protection backups and `protection-status.md` are excluded from normal cleanup. Preserve them and report their retained paths even when verification passes.
 
 An intentional, operative user directive `terminates session` triggers protection-backup cleanup only when it instructs the agent to end the active session and clean its backups. Incidental quotation, documentation, examples, discussion of the phrase, or text copied from another source does not trigger cleanup.
