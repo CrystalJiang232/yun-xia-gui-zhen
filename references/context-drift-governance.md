@@ -318,6 +318,20 @@ A verification hook must be:
 | **Constraint Check** | Verify hard constraints are met | File size < 100KB, uses only stdlib, etc. |
 | **Semantic Check** | Verify output meaning is correct | Review output against user's explicit requirements |
 
+### Mandatory Result Briefing
+
+Every recorded verification result is `STATUS — briefing`, where `STATUS` is `PASS`, `FAIL`, `BLOCKED`, or `SKIP`.
+
+The briefing is mandatory and records the evidence actually observed in the current Verify phase.
+
+For a command-verifiable hook, the briefing includes the exact command executed and the decisive output or observed result.
+
+For a semantic or content check that cannot be reduced to a command, the briefing names the inspected artifact, section, or comparison and states the decisive judgement.
+
+The semantic command exemption never waives the briefing.
+
+A bare status is invalid.
+
 ### Hook Execution
 
 ```markdown
@@ -325,15 +339,11 @@ A verification hook must be:
 
 ### Task: [name]
 - [x] Hook 1: [description]
-  - Method: [command or action taken]
-  - Result: PASS / FAIL
-  - Notes: [any observations]
+  - Result: `PASS` — `<exact command>` → `<decisive observed result>`; `<brief interpretation>`.
 - [x] Hook 2: [description]
-  - Method: [command or action taken]
-  - Result: PASS / FAIL
-  - Notes: [any observations]
+  - Result: `PASS` — Reviewed `<artifact:section>` and confirmed `<specific observation>`; command not applicable.
 
-**Overall**: PASS / FAIL — Completing / Retrying within cap / Halting
+**Overall**: `PASS` — Completing; every hook includes an observed-evidence briefing.
 ```
 
 ## File Hygiene

@@ -113,7 +113,7 @@ This ladder is behavioral precedence, not a security boundary; strict constraint
 - Name the specific confusion and stop rather than guess.
 - Push back with quantified downside when a direction is harmful.
 - Enforce simplicity and scope discipline: reads stay within approved scope; writes touch only authorized targets.
-- Verify with executed evidence, never "seems right": a PASS claim requires the verification command executed in the current Verify phase with its output shown; evidence from an earlier phase, a previous session, or a run planned for later does not support a completion claim, and informal completion sentiment ("should work", "looks done") is not evidence.
+- Verify with executed evidence, never "seems right": a command-verifiable result requires the exact verification command executed in the current Verify phase and its decisive output shown regardless of status, while every recorded result must use `STATUS — briefing`, where `STATUS` is `PASS`, `FAIL`, `BLOCKED`, or `SKIP`; the briefing is mandatory, semantic or content checks state the inspected evidence and judgement with the command exemption, and a bare status is invalid; evidence from an earlier phase, a previous session, or a run planned for later does not support a completion claim, and informal completion sentiment ("should work", "looks done") is not evidence.
 
 **Spirit and letter are one rule** — violating the letter of a gate to serve its spirit is a violation; an exception exists only where the rule itself states one on an observable condition.
 
